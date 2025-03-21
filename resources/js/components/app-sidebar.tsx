@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, User } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, User, GraduationCap, ClipboardList, FileText, Award, Book, Database } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -18,9 +18,39 @@ const mainNavItems: NavItem[] = [
 // Admin-specific navigation items
 const adminNavItems: NavItem[] = [
     {
+        title: 'Admin Dashboard',
+        href: '/admin/dashboard',
+        icon: Database,
+    },
+    {
         title: 'Users',
         href: '/admin/users',
         icon: Users,
+    },
+    {
+        title: 'Courses',
+        href: '/admin/courses',
+        icon: GraduationCap,
+    },
+    {
+        title: 'Enrollments',
+        href: '/admin/enrollments',
+        icon: ClipboardList,
+    },
+    {
+        title: 'Materials',
+        href: '/admin/courses?view=materials',
+        icon: Book,
+    },
+    {
+        title: 'Homework',
+        href: '/admin/courses?view=homework',
+        icon: FileText,
+    },
+    {
+        title: 'Certificates',
+        href: '/admin/courses?view=certificates',
+        icon: Award,
     },
 ];
 
@@ -39,6 +69,11 @@ const studentNavItems: NavItem[] = [
         title: 'My Courses',
         href: '/student/courses',
         icon: BookOpen,
+    },
+    {
+        title: 'My Certificates',
+        href: '/student/certificates',
+        icon: Award,
     },
 ];
 
@@ -60,14 +95,18 @@ export function AppSidebar() {
     const userRoles = auth.user?.roles || [];
     
     // Determine which nav items to show based on user role
-    let navItems = [...mainNavItems];
+    let navItems = [];
     
     if (userRoles.includes('admin')) {
-        navItems = [...navItems, ...adminNavItems];
+        // Admin gets admin-specific nav items instead of the general dashboard
+        navItems = [...adminNavItems];
     } else if (userRoles.includes('teacher')) {
-        navItems = [...navItems, ...teacherNavItems];
+        navItems = [...mainNavItems, ...teacherNavItems];
     } else if (userRoles.includes('student')) {
-        navItems = [...navItems, ...studentNavItems];
+        navItems = [...mainNavItems, ...studentNavItems];
+    } else {
+        // Regular users just get the main nav items
+        navItems = [...mainNavItems];
     }
 
     return (
@@ -76,7 +115,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/dashboard" prefetch>
+                            <Link href={userRoles.includes('admin') ? "/admin/dashboard" : "/dashboard"} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

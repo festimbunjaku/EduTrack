@@ -73,6 +73,73 @@
   - [x] Create role transition validation
   - [x] Implement audit logging for role changes
 
+## Course Management
+- [x] Course model and database structure
+  - [x] Create Course model with required fields (title, description, features, price, dates, schedule)
+  - [x] Define course migration with all necessary fields
+  - [x] Add relationships to User model (Teacher assignment)
+  - [x] Create course status enum (upcoming, active, completed, cancelled)
+  - [x] Set up validation rules for course creation
+  - [x] Add maximum enrollment limit (20 students)
+  - [x] Create course location and scheduling fields
+  - [x] Add course media/image attachment functionality
+- [x] Course administration (Admin only)
+  - [x] Create CourseController with CRUD operations
+  - [x] Add Courses menu item in admin sidebar
+  - [x] Build course creation interface
+  - [x] Implement course editing functionality
+  - [x] Create course listing with filtering and search
+  - [x] Add teacher assignment interface
+  - [x] Implement course scheduling system
+  - [x] Build course status management
+  - [x] Create course cancellation/rescheduling functionality
+  - [x] Set up course detail view
+- [x] Enrollment system with approval workflow
+  - [x] Create Enrollment model and migration
+  - [x] Build enrollment request functionality for students
+  - [x] Implement admin approval/denial interface
+  - [x] Create enrollment status tracking (pending, approved, denied)
+  - [x] Add enrollment history and tracking
+  - [x] Set up waitlist functionality for full courses
+  - [x] Implement manual waitlist management for admins
+  - [ ] Create notification system for enrollment status changes
+- [x] Course materials management
+  - [x] Create CourseMaterial model and migration
+  - [x] Build material upload interface for teachers
+  - [x] Implement file storage and organization
+  - [x] Support multiple file types (documents, videos, links)
+  - [x] Create material categorization system
+  - [x] Add material listing for students
+  - [x] Implement download/view functionality
+  - [x] Set up access control based on enrollment
+- [x] Homework assignment system
+  - [x] Create Homework model and migration
+  - [x] Create HomeworkSubmission model and migration
+  - [x] Build homework creation interface for teachers
+  - [x] Implement deadline functionality
+  - [x] Create student submission interface
+  - [x] Build submission review system for teachers
+  - [x] Add approval/denial with comments
+  - [x] Implement submission status tracking
+  - [x] Create notification system for new assignments and reviews
+- [x] Course certificate system
+  - [x] Create Certificate model and migration
+  - [x] Design certificate template with customizable fields
+  - [x] Build certificate generation functionality
+  - [x] Implement PDF export capability
+  - [x] Add teacher signature functionality
+  - [x] Create certificate verification system
+  - [x] Build student certificate management interface
+  - [ ] Implement certificate history tracking
+- [x] Notification system (Canceled)
+  - [x] ~~Create Notification model and migration~~ (Canceled)
+  - [x] ~~Implement course update notifications~~ (Canceled)
+  - [x] ~~Add assignment notifications~~ (Canceled)
+  - [x] ~~Build enrollment status notifications~~ (Canceled)
+  - [x] ~~Create system for homework review notifications~~ (Canceled)
+  - [x] ~~Implement notification preferences~~ (Canceled)
+  - [x] ~~Add notification center interface~~ (Canceled)
+
 ## Technical Improvements
 - [ ] Performance optimization
 - [x] Security hardening
