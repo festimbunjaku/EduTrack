@@ -1,5 +1,6 @@
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useState } from 'react';
+import { FlashMessage } from '@/components/flash-message';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -18,11 +19,17 @@ export function AppShell({ children, variant = 'header' }: AppShellProps) {
     };
 
     if (variant === 'header') {
-        return <div className="flex min-h-screen w-full flex-col">{children}</div>;
+        return (
+            <div className="flex min-h-screen w-full flex-col">
+                <FlashMessage />
+                {children}
+            </div>
+        );
     }
 
     return (
         <SidebarProvider defaultOpen={isOpen} open={isOpen} onOpenChange={handleSidebarChange}>
+            <FlashMessage />
             {children}
         </SidebarProvider>
     );

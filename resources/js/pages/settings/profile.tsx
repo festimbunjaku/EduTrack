@@ -9,6 +9,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
@@ -40,6 +41,19 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         });
     };
 
+    const getRoleBadgeColor = (role: string) => {
+        switch (role) {
+            case 'admin':
+                return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300';
+            case 'teacher':
+                return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300';
+            case 'student':
+                return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
+            default:
+                return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-300';
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Profile settings" />
@@ -47,6 +61,22 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
             <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall title="Profile information" description="Update your name and email address" />
+
+                    {auth.user.roles && auth.user.roles.length > 0 && (
+                        <div className="mb-4">
+                            <Label>Your Role</Label>
+                            <div className="mt-1">
+                                {auth.user.roles.map((role, index) => (
+                                    <Badge 
+                                        key={index} 
+                                        className={`mr-2 ${getRoleBadgeColor(role)}`}
+                                    >
+                                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">

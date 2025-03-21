@@ -1,0 +1,81 @@
+# Physical Course Management System - Project Tracker
+
+## Core System Setup
+- [x] Project initialization with Laravel 12 and Inertia.js 2.0 (Completed by starter kit)
+  - [x] Laravel 12 project setup
+  - [x] Inertia.js 2.0 integration
+  - [x] React and TypeScript configuration
+  - [x] Tailwind CSS setup
+  - [x] Base folder structure organization
+- [x] Authentication system (login, register, password reset) (Completed by starter kit)
+  - [x] Login functionality
+  - [x] Registration with email verification
+  - [x] Password reset flow
+  - [x] Remember me functionality
+  - [x] Auth middleware
+- [x] Role-based access control with Spatie (Student, Teacher, Admin)
+  - [x] Install Spatie permissions package
+  - [x] Create roles migration and seeder
+  - [x] Configure User model with HasRoles trait
+  - [x] Set up role middleware for routes
+  - [x] Default new users to Student role
+  - [x] Admin functionality to change user roles
+- [x] Basic dashboard layouts for each role
+  - [x] Create base layout component with sidebar and header
+  - [x] Build Student dashboard view
+  - [x] Build Teacher dashboard view
+  - [x] Build Admin dashboard view
+  - [x] Implement responsive design for all devices
+  - [x] Add dark/light mode toggle
+- [x] System navigation and routing
+  - [x] Define route structure with role-based groups
+  - [x] Create main navigation component
+  - [x] Build role-specific sidebar navigation
+  - [x] Implement breadcrumb system
+  - [x] Add mobile navigation drawer
+  - [x] Configure middleware for route protection
+
+## User Management
+- [x] User model with role relationships
+  - [x] Create for the admin a new menu in the sidebar called Users
+  - [x] Extend User model with additional fields
+  - [x] Create migration for additional user fields
+  - [x] Configure Spatie role relationships
+  - [ ] Add course enrollment relationships
+  - [x] Implement role helper methods
+  - [x] Set up query scopes for filtering
+- [x] User listing interface with filtering and search
+  - [x] Create UserController with index method
+  - [x] Build data table component with Tailwind
+  - [x] Implement search functionality
+  - [x] Add role and status filters
+  - [x] Create pagination system
+  - [x] Add sorting functionality
+- [x] User creation and editing
+  - [x] Build user creation form
+  - [x] Implement validation rules
+  - [ ] Create profile image upload functionality by registration and it should show in profile.tsx too and there you should be able to remove it and edit it.
+  - [x] Build user editing interface
+  - [x] Add role selection (admin only)
+  - [x] Implement AJAX form submission
+- [x] Profile management
+  - [x] Create ProfileController
+  - [x] Build profile view page
+  - [x] Implement profile editing form
+  - [x] Add avatar upload and cropping
+  - [x] Create security settings section
+  - [ ] Add notification preferences
+- [x] Role assignment interface (Admin only)
+  - [x] Create RoleController
+  - [x] Build role management dashboard
+  - [x] Implement user-role matrix view
+  - [x] Add batch role assignment
+  - [x] Create role transition validation
+  - [x] Implement audit logging for role changes
+
+## Technical Improvements
+- [ ] Performance optimization
+- [x] Security hardening
+- [x] Mobile responsiveness
+- [x] Accessibility compliance
+- [ ] Testing suite 

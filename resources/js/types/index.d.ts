@@ -36,7 +36,19 @@ export interface User {
     email: string;
     avatar?: string;
     email_verified_at: string | null;
+    roles?: string[];
+    permissions?: string[];
     created_at: string;
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+    auth: Auth;
+    ziggy: Config & { location: string };
+    flash?: {
+        success?: string;
+        error?: string;
+        warning?: string;
+    };
+};
