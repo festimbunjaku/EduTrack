@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, User, GraduationCap, ClipboardList, FileText, Award, Book, Database, Settings, ChevronRight, PieChart, UserPlus, Layers, Calendar, Search } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, User, GraduationCap, ClipboardList, FileText, Award, Book, Database, Settings, ChevronRight, PieChart, UserPlus, Layers, Calendar, Search, Home } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -62,6 +62,23 @@ const adminNavItems: NavItem[] = [
         ]
     },
     {
+        title: 'Rooms & Scheduling',
+        href: route('admin.rooms.index'),
+        icon: Home,
+        children: [
+            {
+                title: 'Manage Rooms',
+                href: route('admin.rooms.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'View Timetable',
+                href: route('admin.rooms.timetable'),
+                icon: ChevronRight,
+            },
+        ]
+    },
+    {
         title: 'Enrollments',
         href: route('admin.enrollments.index'),
         icon: ClipboardList,
@@ -90,28 +107,18 @@ const adminNavItems: NavItem[] = [
     },
     {
         title: 'Course Materials',
-        href: route('admin.courses.index') + '?view=materials',
+        href: route('admin.all.materials.index'),
         icon: Book,
     },
     {
         title: 'Homework',
-        href: route('admin.courses.index') + '?view=homework',
+        href: route('admin.all.homework.index'),
         icon: FileText,
     },
     {
         title: 'Certificates',
-        href: route('admin.courses.index') + '?view=certificates',
+        href: route('admin.all.certificates.index'),
         icon: Award,
-    },
-    {
-        title: 'Calendar',
-        href: route('admin.dashboard') + '?view=calendar',
-        icon: Calendar,
-    },
-    {
-        title: 'System Settings',
-        href: route('admin.dashboard') + '?view=settings',
-        icon: Settings,
     },
 ];
 
@@ -146,16 +153,16 @@ const teacherNavItems: NavItem[] = [
     },
     {
         title: 'Homework',
-        href: route('teacher.courses.index') + '?view=homework',
+        href: route('teacher.homework.pending'),
         icon: FileText,
         children: [
             {
                 title: 'Pending Review',
-                href: route('teacher.courses.index') + '?view=homework&filter=pending',
+                href: route('teacher.homework.pending'),
                 icon: ChevronRight,
             },
             {
-                title: 'Manage Assignments',
+                title: 'All Assignments',
                 href: route('teacher.courses.index') + '?view=homework&filter=all',
                 icon: ChevronRight,
             }
@@ -163,18 +170,13 @@ const teacherNavItems: NavItem[] = [
     },
     {
         title: 'Course Materials',
-        href: route('teacher.courses.index') + '?view=materials',
+        href: route('teacher.materials.index'),
         icon: Book,
     },
     {
         title: 'Certificates',
-        href: route('teacher.courses.index') + '?view=certificates',
+        href: route('teacher.certificates.index'),
         icon: Award,
-    },
-    {
-        title: 'Calendar',
-        href: route('teacher.dashboard') + '?view=calendar',
-        icon: Calendar,
     },
 ];
 
@@ -219,7 +221,7 @@ const studentNavItems: NavItem[] = [
             },
             {
                 title: 'Completed Assignments',
-                href: route('student.homework.index', { filter: 'completed' }),
+                href: route('student.homework.index') + '?filter=completed',
                 icon: ChevronRight,
             }
         ]

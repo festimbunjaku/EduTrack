@@ -27,6 +27,7 @@ import {
   FolderIcon,
   LinkIcon,
   SearchIcon,
+  BookOpen,
 } from 'lucide-react';
 import {
   Select,
@@ -384,15 +385,21 @@ export default function Index({
                               
                               <TableCell>
                                 <div className="flex items-center">
-                                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center mr-2 overflow-hidden">
+                                  <div className="h-12 w-12 rounded-md overflow-hidden flex-shrink-0">
                                     {material.course.image ? (
                                       <img 
-                                        src={`/storage/${material.course.image}`} 
-                                        alt={material.course.title} 
-                                        className="w-full h-full object-cover"
+                                        src={`/storage/${material.course.image}`}
+                                        alt={material.course.title}
+                                        className="h-full w-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.onerror = null;
+                                          e.currentTarget.src = '/images/course-placeholder.png';
+                                        }}
                                       />
                                     ) : (
-                                      <BookOpenIcon className="h-3 w-3 text-gray-500" />
+                                      <div className="h-12 w-12 rounded-md overflow-hidden bg-slate-200 flex-shrink-0 flex items-center justify-center">
+                                        <BookOpen className="h-6 w-6 text-slate-400" />
+                                      </div>
                                     )}
                                   </div>
                                   <span className="text-sm">{material.course.title}</span>

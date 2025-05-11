@@ -18,8 +18,13 @@ class Certificate extends Model
     protected $fillable = [
         'course_id',
         'user_id',
+        'template_id',
         'certificate_number',
+        'achievement',
         'issued_at',
+        'completion_date',
+        'issuer_id',
+        'description',
         'pdf_path',
         'signature',
     ];
@@ -31,6 +36,7 @@ class Certificate extends Model
      */
     protected $casts = [
         'issued_at' => 'datetime',
+        'completion_date' => 'date',
     ];
 
     /**
@@ -47,5 +53,21 @@ class Certificate extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+    
+    /**
+     * Get the template associated with the certificate.
+     */
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(CertificateTemplate::class);
+    }
+
+    /**
+     * Get the issuer (teacher) who issued this certificate.
+     */
+    public function issuer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'issuer_id');
     }
 }

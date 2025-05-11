@@ -3,7 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, BookOpen, School, Settings, Activity, AlertTriangle, Calendar, TrendingUp, Star, BarChart } from 'lucide-react';
+import { Users, BookOpen, School, Settings, Activity, AlertTriangle, TrendingUp, Star, BarChart } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -28,10 +28,6 @@ export default function AdminDashboard() {
                         <p className="text-muted-foreground">Comprehensive overview of your educational platform</p>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="default" size="sm">
-                            <Settings className="mr-2 h-4 w-4" />
-                            System Settings
-                        </Button>
                         <Button variant="outline" size="sm">
                             <Activity className="mr-2 h-4 w-4" />
                             View Logs
@@ -181,50 +177,6 @@ export default function AdminDashboard() {
                             <Button variant="outline" className="w-full">View All Users</Button>
                         </CardFooter>
                     </Card>
-
-                    {/* Upcoming Events */}
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader>
-                            <CardTitle>Upcoming Events</CardTitle>
-                            <CardDescription>Scheduled activities and deadlines</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { title: "End of Term", date: "June 15, 2023", type: "Deadline" },
-                                    { title: "Teacher Training", date: "May 28, 2023", type: "Event" },
-                                    { title: "System Maintenance", date: "May 22, 2023", type: "Maintenance" },
-                                ].map((event, i) => (
-                                    <div key={i} className="flex items-start gap-4 rounded-lg border p-3">
-                                        <div className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                                            event.type === "Deadline" ? "bg-red-100 text-red-600" : 
-                                            event.type === "Event" ? "bg-emerald-100 text-emerald-600" : 
-                                            "bg-amber-100 text-amber-600"
-                                        }`}>
-                                            <Calendar className="h-4 w-4" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h4 className="text-sm font-medium">{event.title}</h4>
-                                            <div className="flex items-center gap-2">
-                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                                                    event.type === "Deadline" ? "bg-red-100 text-red-800" : 
-                                                    event.type === "Event" ? "bg-emerald-100 text-emerald-800" : 
-                                                    "bg-amber-100 text-amber-800"
-                                                }`}>
-                                                    {event.type}
-                                                </span>
-                                                <p className="text-xs text-muted-foreground">{event.date}</p>
-                                            </div>
-                                        </div>
-                                        <Button variant="ghost" size="sm">View</Button>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="outline" className="w-full">View Calendar</Button>
-                        </CardFooter>
-                    </Card>
                 </section>
 
                 {/* Course Overview Section */}
@@ -248,40 +200,37 @@ export default function AdminDashboard() {
                                             <th className="px-4 py-3">Instructor</th>
                                             <th className="px-4 py-3">Students</th>
                                             <th className="px-4 py-3">Completion</th>
-                                            <th className="px-4 py-3">Rating</th>
-                                            <th className="px-4 py-3">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {[
-                                            { name: "Introduction to Programming", instructor: "Dr. Jane Smith", students: 45, completion: 78, rating: 4.7 },
-                                            { name: "Advanced Data Structures", instructor: "Prof. Michael Brown", students: 32, completion: 65, rating: 4.5 },
-                                            { name: "Web Development Fundamentals", instructor: "Sarah Johnson", students: 58, completion: 82, rating: 4.8 },
-                                            { name: "Database Management", instructor: "Dr. Robert Chen", students: 27, completion: 70, rating: 4.3 },
+                                            { name: "Web Development Fundamentals", instructor: "Sarah Johnson", students: 32, completion: 78 },
+                                            { name: "Advanced Data Science", instructor: "Michael Chen", students: 24, completion: 65 },
+                                            { name: "UX/UI Design Principles", instructor: "Emily Rodriguez", students: 29, completion: 92 },
+                                            { name: "Mobile App Development", instructor: "David Kim", students: 18, completion: 45 },
                                         ].map((course, i) => (
-                                            <tr key={i} className="border-b text-sm">
-                                                <td className="px-4 py-3 font-medium">{course.name}</td>
-                                                <td className="px-4 py-3 text-muted-foreground">{course.instructor}</td>
+                                            <tr key={i} className="border-b">
+                                                <td className="px-4 py-3">
+                                                    <div>
+                                                        <div className="font-medium">{course.name}</div>
+                                                        <div className="text-xs text-muted-foreground">3 months duration</div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3">{course.instructor}</td>
                                                 <td className="px-4 py-3">{course.students}</td>
                                                 <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="h-2 w-16 rounded-full bg-gray-100">
-                                                            <div 
-                                                                className="h-2 rounded-full bg-emerald-500" 
-                                                                style={{ width: `${course.completion}%` }}
-                                                            ></div>
+                                                    <div className="w-full">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                                                                <div className={`h-full ${
+                                                                    course.completion > 75 ? "bg-emerald-500" : 
+                                                                    course.completion > 50 ? "bg-blue-500" : 
+                                                                    "bg-amber-500"
+                                                                }`} style={{ width: `${course.completion}%` }}></div>
+                                                            </div>
+                                                            <span className="text-xs font-medium">{course.completion}%</span>
                                                         </div>
-                                                        <span>{course.completion}%</span>
                                                     </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <div className="flex items-center gap-1">
-                                                        <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                                                        <span>{course.rating}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Button variant="ghost" size="sm">View</Button>
                                                 </td>
                                             </tr>
                                         ))}

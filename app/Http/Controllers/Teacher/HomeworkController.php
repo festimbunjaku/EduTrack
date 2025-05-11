@@ -74,8 +74,18 @@ class HomeworkController extends Controller
         $homework->deadline = $request->due_date;
 
         if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('homework_attachments', 'public');
-            $homework->attachment = $attachmentPath;
+            $file = $request->file('attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            
+            // Store file
+            $path = $file->storeAs(
+                'homework_attachments/' . $course->id,
+                $fileName,
+                'public'
+            );
+            
+            $homework->attachment_path = $path;
+            $homework->attachment_name = $file->getClientOriginalName();
         }
 
         $homework->save();
@@ -157,12 +167,22 @@ class HomeworkController extends Controller
 
         if ($request->hasFile('attachment')) {
             // Delete old attachment if exists
-            if ($homework->attachment) {
-                Storage::disk('public')->delete($homework->attachment);
+            if ($homework->attachment_path) {
+                Storage::disk('public')->delete($homework->attachment_path);
             }
             
-            $attachmentPath = $request->file('attachment')->store('homework_attachments', 'public');
-            $homework->attachment = $attachmentPath;
+            $file = $request->file('attachment');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            
+            // Store file
+            $path = $file->storeAs(
+                'homework_attachments/' . $course->id,
+                $fileName,
+                'public'
+            );
+            
+            $homework->attachment_path = $path;
+            $homework->attachment_name = $file->getClientOriginalName();
         }
 
         $homework->save();
@@ -187,8 +207,8 @@ class HomeworkController extends Controller
         }
 
         // Delete the attachment if it exists
-        if ($homework->attachment) {
-            Storage::disk('public')->delete($homework->attachment);
+        if ($homework->attachment_path) {
+            Storage::disk('public')->delete($homework->attachment_path);
         }
 
         // Delete the homework
@@ -232,7 +252,36 @@ class HomeworkController extends Controller
     }
     
     /**
-     * Display all pending homework submissions for the teacher.
+     * Display all homeworks across all courses taught by the teacher.
+     */
+    public function teacherHomework()
+    {
+        $teacherId = Auth::id();
+        
+        // Get courses taught by the teacher
+        $courses = Course::where('teacher_id', $teacherId)->get();
+        
+        $homeworks = Homework::whereHas('course', function ($query) use ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        })
+        ->withCount(['submissions'])
+        ->with('course')
+        ->orderBy('due_date', 'desc')
+        ->get();
+
+        return Inertia::render('Teacher/Homework/AllHomework', [
+            'courses' => $courses,
+            'homeworks' => $homeworks,
+            'courseCount' => $courses->count(),
+            'totalSubmissions' => $homeworks->sum('submissions_count'),
+            'pendingCount' => HomeworkSubmission::whereHas('homework.course', function ($query) use ($teacherId) {
+                $query->where('teacher_id', $teacherId);
+            })->whereNull('graded_at')->count(),
+        ]);
+    }
+    
+    /**
+     * Display the homework needing review.
      */
     public function pendingReviews()
     {

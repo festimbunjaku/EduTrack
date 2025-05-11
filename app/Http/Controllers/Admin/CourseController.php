@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\Room;
 use App\Models\User;
+use App\Services\TimetableService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -12,6 +14,13 @@ use Inertia\Inertia;
 
 class CourseController extends Controller
 {
+    protected $timetableService;
+
+    public function __construct(TimetableService $timetableService)
+    {
+        $this->timetableService = $timetableService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -64,8 +73,19 @@ class CourseController extends Controller
     {
         $teachers = User::role('teacher')->select('id', 'name')->get();
         
+        $statuses = [
+            'upcoming' => 'Upcoming',
+            'active' => 'Active',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled'
+        ];
+        
+        $rooms = Room::where('is_active', true)->get();
+        
         return Inertia::render('Admin/Courses/Create', [
             'teachers' => $teachers,
+            'statuses' => $statuses,
+            'rooms' => $rooms,
         ]);
     }
 
@@ -84,6 +104,7 @@ class CourseController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'schedule' => 'required|array',
+            'room_schedules' => 'nullable|array',
             'teacher_id' => 'required|exists:users,id',
             'max_enrollment' => 'required|integer|min:1|max:20',
             'location' => 'required|string|max:255',
@@ -97,6 +118,17 @@ class CourseController extends Controller
         }
 
         $course = Course::create($validated);
+
+        // Process room schedules if provided
+        if ($request->has('room_schedules') && !empty($request->room_schedules)) {
+            foreach ($request->room_schedules as $scheduleData) {
+                $conflicts = $this->timetableService->checkForConflicts($scheduleData);
+                
+                if (empty($conflicts)) {
+                    $this->timetableService->scheduleRoom($course, $scheduleData);
+                }
+            }
+        }
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course created successfully.');
@@ -123,10 +155,22 @@ class CourseController extends Controller
     public function edit(Course $course)
     {
         $teachers = User::role('teacher')->select('id', 'name')->get();
+        $rooms = Room::where('is_active', true)->get();
+        $roomSchedules = $this->timetableService->getCourseTimetable($course);
+        
+        $statuses = [
+            'upcoming' => 'Upcoming',
+            'active' => 'Active',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled'
+        ];
         
         return Inertia::render('Admin/Courses/Edit', [
             'course' => $course,
             'teachers' => $teachers,
+            'rooms' => $rooms,
+            'roomSchedules' => $roomSchedules,
+            'statuses' => $statuses,
         ]);
     }
 
@@ -145,6 +189,7 @@ class CourseController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'schedule' => 'required|array',
+            'room_schedules' => 'nullable|array',
             'teacher_id' => 'required|exists:users,id',
             'max_enrollment' => 'required|integer|min:1|max:20',
             'location' => 'required|string|max:255',
@@ -164,6 +209,21 @@ class CourseController extends Controller
 
         $course->update($validated);
 
+        // Process room schedules if provided
+        if ($request->has('room_schedules') && !empty($request->room_schedules)) {
+            // Remove existing schedules first
+            $course->roomSchedules()->delete();
+            
+            // Add new schedules
+            foreach ($request->room_schedules as $scheduleData) {
+                $conflicts = $this->timetableService->checkForConflicts($scheduleData);
+                
+                if (empty($conflicts)) {
+                    $this->timetableService->scheduleRoom($course, $scheduleData);
+                }
+            }
+        }
+
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course updated successfully.');
     }
@@ -182,5 +242,35 @@ class CourseController extends Controller
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course deleted successfully.');
+    }
+
+    /**
+     * Generate a timetable for the course.
+     */
+    public function generateTimetable(Course $course, Request $request)
+    {
+        $validated = $request->validate([
+            'days' => 'required|array',
+            'days.*' => 'required|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
+        ]);
+
+        $timetable = $this->timetableService->generateTimetable($course, $validated['days']);
+
+        return response()->json([
+            'timetable' => $timetable,
+        ]);
+    }
+
+    /**
+     * View the course timetable.
+     */
+    public function viewTimetable(Course $course)
+    {
+        $timetable = $this->timetableService->getCourseTimetable($course);
+
+        return Inertia::render('Admin/Courses/Timetable', [
+            'course' => $course,
+            'timetable' => $timetable,
+        ]);
     }
 }

@@ -36,6 +36,29 @@ class CertificateController extends Controller
     }
 
     /**
+     * Display all certificates issued by this teacher across all their courses
+     */
+    public function teacherCertificates()
+    {
+        $teacherId = Auth::id();
+        
+        // Get courses taught by the teacher
+        $courses = Course::where('teacher_id', $teacherId)->get();
+        
+        $certificates = Certificate::whereHas('course', function ($query) use ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        })->with(['course', 'user'])->orderBy('issued_at', 'desc')->get();
+
+        return Inertia::render('Teacher/Certificates/AllCertificates', [
+            'courses' => $courses,
+            'certificates' => $certificates,
+            'courseCount' => $courses->count(),
+            'certificateCount' => $certificates->count(),
+            'studentCount' => $certificates->pluck('user_id')->unique()->count()
+        ]);
+    }
+
+    /**
      * Show form to issue a new certificate.
      */
     public function create(Course $course)
@@ -106,10 +129,25 @@ class CertificateController extends Controller
             return redirect()->back()->with('error', 'This student is not enrolled in this course.');
         }
 
+        // Get the default certificate template
+        $defaultTemplate = \App\Models\CertificateTemplate::where('is_active', true)->first();
+        
+        if (!$defaultTemplate) {
+            // Create a default template if none exists
+            $defaultTemplate = \App\Models\CertificateTemplate::create([
+                'name' => 'Default Certificate Template',
+                'description' => 'The default certificate template used for all certificates',
+                'html_template' => view('templates.default_certificate')->render(),
+                'css_styles' => '',
+                'is_active' => true,
+            ]);
+        }
+
         // Create the certificate
         $certificate = new Certificate();
         $certificate->course_id = $course->id;
         $certificate->user_id = $request->user_id;
+        $certificate->template_id = $defaultTemplate->id;
         $certificate->certificate_number = $this->generateCertificateNumber();
         $certificate->achievement = $request->achievement;
         $certificate->issued_at = now();
@@ -124,8 +162,17 @@ class CertificateController extends Controller
     /**
      * Display the specified certificate.
      */
-    public function show(Course $course, Certificate $certificate)
+    public function show(Request $request, Course $course = null, Certificate $certificate = null)
     {
+        // If certificate is directly accessed via the standalone route
+        if (!$course && $certificate) {
+            $certificate = $certificate ?? request()->route('certificate');
+            $course = $certificate->course;
+        } else if ($course && !$certificate) {
+            // If certificate is accessed via the nested route
+            $certificate = request()->route('certificate');
+        }
+        
         // Ensure the authenticated teacher is the owner of this course
         if ($course->teacher_id !== Auth::id()) {
             abort(403, 'You do not have permission to view certificates for this course.');
@@ -147,8 +194,17 @@ class CertificateController extends Controller
     /**
      * Remove the specified certificate.
      */
-    public function destroy(Course $course, Certificate $certificate)
+    public function destroy(Request $request, Course $course = null, Certificate $certificate = null)
     {
+        // If certificate is directly accessed via the standalone route
+        if (!$course && $certificate) {
+            $certificate = $certificate ?? request()->route('certificate');
+            $course = $certificate->course;
+        } else if ($course && !$certificate) {
+            // If certificate is accessed via the nested route
+            $certificate = request()->route('certificate');
+        }
+        
         // Ensure the authenticated teacher is the owner of this course
         if ($course->teacher_id !== Auth::id()) {
             abort(403, 'You do not have permission to revoke certificates for this course.');
@@ -161,8 +217,13 @@ class CertificateController extends Controller
 
         $certificate->delete();
 
-        return redirect()->route('teacher.courses.certificates.index', $course->id)
-            ->with('success', 'Certificate revoked successfully.');
+        if ($request->route('course')) {
+            return redirect()->route('teacher.courses.certificates.index', $course->id)
+                ->with('success', 'Certificate revoked successfully.');
+        } else {
+            return redirect()->route('teacher.certificates.index')
+                ->with('success', 'Certificate revoked successfully.');
+        }
     }
 
     /**

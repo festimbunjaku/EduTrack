@@ -316,7 +316,7 @@ export default function Index({ auth, homeworks, upcoming_count, completed_count
                             </TableCell>
                             
                             <TableCell className="text-right">
-                              <Link href={route('student.homework.show', [homework.course.id, homework.id])}>
+                              <Link href={route('student.homework.show', homework.id)}>
                                 <Button size="sm" variant={homework.is_submitted ? "outline" : "default"}>
                                   {homework.is_submitted ? 'View Submission' : 'Submit'}
                                 </Button>

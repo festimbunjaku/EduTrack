@@ -20,7 +20,7 @@ class CourseController extends Controller
         $query = Enrollment::query()
             ->where('user_id', Auth::id())
             ->where('enrollments.status', 'approved')
-            ->with('course')
+            ->with('course.teacher')
             ->join('courses', 'enrollments.course_id', '=', 'courses.id')
             ->select('enrollments.*', 'courses.title', 'courses.status');
 

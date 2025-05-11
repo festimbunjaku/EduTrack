@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
-use App\Models\Material;
+use App\Models\CourseMaterial;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -22,13 +22,35 @@ class MaterialController extends Controller
             abort(403, 'You do not have permission to manage materials for this course.');
         }
 
-        $materials = Material::where('course_id', $course->id)
+        $materials = CourseMaterial::where('course_id', $course->id)
             ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('Teacher/Materials/Index', [
             'course' => $course,
             'materials' => $materials,
+        ]);
+    }
+
+    /**
+     * Display all materials for all courses taught by the teacher
+     */
+    public function teacherMaterials()
+    {
+        $teacherId = Auth::id();
+        
+        // Get courses taught by the teacher
+        $courses = Course::where('teacher_id', $teacherId)->get();
+        
+        $materials = CourseMaterial::whereHas('course', function ($query) use ($teacherId) {
+            $query->where('teacher_id', $teacherId);
+        })->with('course')->orderBy('created_at', 'desc')->get();
+
+        return Inertia::render('Teacher/Materials/AllMaterials', [
+            'courses' => $courses,
+            'materials' => $materials,
+            'courseCount' => $courses->count(),
+            'materialTypes' => $materials->groupBy('type')->map->count(),
         ]);
     }
 
@@ -65,7 +87,7 @@ class MaterialController extends Controller
             'url' => 'required_if:type,link|url',
         ]);
 
-        $material = new Material();
+        $material = new CourseMaterial();
         $material->course_id = $course->id;
         $material->title = $request->title;
         $material->description = $request->description;
@@ -90,8 +112,17 @@ class MaterialController extends Controller
     /**
      * Display the specified material.
      */
-    public function show(Course $course, Material $material)
+    public function show(Course $course = null, CourseMaterial $material = null)
     {
+        // If material is directly accessed via the standalone route
+        if (!$course && $material) {
+            $material = $material ?? request()->route('material');
+            $course = $material->course;
+        } else if ($course && !$material) {
+            // If material is accessed via the nested route
+            $material = request()->route('material');
+        }
+        
         // Ensure the authenticated teacher is the owner of this course
         if ($course->teacher_id !== Auth::id()) {
             abort(403, 'You do not have permission to view this material.');
@@ -111,8 +142,17 @@ class MaterialController extends Controller
     /**
      * Show the form for editing the specified material.
      */
-    public function edit(Course $course, Material $material)
+    public function edit(Course $course = null, CourseMaterial $material = null)
     {
+        // If material is directly accessed via the standalone route
+        if (!$course && $material) {
+            $material = $material ?? request()->route('material');
+            $course = $material->course;
+        } else if ($course && !$material) {
+            // If material is accessed via the nested route
+            $material = request()->route('material');
+        }
+        
         // Ensure the authenticated teacher is the owner of this course
         if ($course->teacher_id !== Auth::id()) {
             abort(403, 'You do not have permission to edit this material.');
@@ -132,8 +172,17 @@ class MaterialController extends Controller
     /**
      * Update the specified material in storage.
      */
-    public function update(Request $request, Course $course, Material $material)
+    public function update(Request $request, Course $course = null, CourseMaterial $material = null)
     {
+        // If material is directly accessed via the standalone route
+        if (!$course && $material) {
+            $material = $material ?? request()->route('material');
+            $course = $material->course;
+        } else if ($course && !$material) {
+            // If material is accessed via the nested route
+            $material = request()->route('material');
+        }
+        
         // Ensure the authenticated teacher is the owner of this course
         if ($course->teacher_id !== Auth::id()) {
             abort(403, 'You do not have permission to update this material.');
@@ -179,15 +228,29 @@ class MaterialController extends Controller
 
         $material->save();
 
-        return redirect()->route('teacher.courses.materials.index', $course->id)
-            ->with('success', 'Material updated successfully.');
+        if ($request->route('course')) {
+            return redirect()->route('teacher.courses.materials.index', $course->id)
+                ->with('success', 'Material updated successfully.');
+        } else {
+            return redirect()->route('teacher.materials.show', $material->id)
+                ->with('success', 'Material updated successfully.');
+        }
     }
 
     /**
      * Remove the specified material from storage.
      */
-    public function destroy(Course $course, Material $material)
+    public function destroy(Request $request, Course $course = null, CourseMaterial $material = null)
     {
+        // If material is directly accessed via the standalone route
+        if (!$course && $material) {
+            $material = $material ?? request()->route('material');
+            $course = $material->course;
+        } else if ($course && !$material) {
+            // If material is accessed via the nested route
+            $material = request()->route('material');
+        }
+        
         // Ensure the authenticated teacher is the owner of this course
         if ($course->teacher_id !== Auth::id()) {
             abort(403, 'You do not have permission to delete this material.');
@@ -206,7 +269,12 @@ class MaterialController extends Controller
         // Delete the material
         $material->delete();
 
-        return redirect()->route('teacher.courses.materials.index', $course->id)
-            ->with('success', 'Material deleted successfully.');
+        if ($request->route('course')) {
+            return redirect()->route('teacher.courses.materials.index', $course->id)
+                ->with('success', 'Material deleted successfully.');
+        } else {
+            return redirect()->route('teacher.materials.index')
+                ->with('success', 'Material deleted successfully.');
+        }
     }
 }

@@ -130,10 +130,14 @@ export interface Certificate {
     issued_at: string;
     pdf_path: string | null;
     signature: string | null;
+    achievement: string;
+    completion_date: string;
+    issuer_id: number;
     created_at: string;
     updated_at: string;
     course?: Course;
     user?: User;
+    issuer?: User;
 }
 
 export interface Enrollment {

@@ -64,20 +64,7 @@ class CertificateController extends Controller
             return redirect()->back()->with('error', 'Certificate is not available for download yet.');
         }
         
-        // Check if the file exists in the storage
-        if (!Storage::disk('public')->exists($certificate->pdf_path)) {
-            // Request PDF generation from admin controller
-            $adminController = new \App\Http\Controllers\Admin\CertificateController();
-            $certificate->load('course');
-            $pdfPath = $adminController->generateCertificatePDF($certificate);
-            $certificate->pdf_path = $pdfPath;
-            $certificate->save();
-        }
-
-        // Return the file download response
-        return response()->download(
-            storage_path('app/public/' . $certificate->pdf_path),
-            "certificate_{$certificate->certificate_number}.pdf"
-        );
+        // Redirect to the direct download route to bypass storage access issues
+        return redirect()->route('download.certificate', ['certificateId' => $certificate->id]);
     }
 }

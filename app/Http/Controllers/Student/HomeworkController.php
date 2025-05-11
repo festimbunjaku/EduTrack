@@ -79,8 +79,10 @@ class HomeworkController extends Controller
     /**
      * Display the specified homework.
      */
-    public function show(Course $course, Homework $homework)
+    public function show(Homework $homework)
     {
+        $course = $homework->course;
+        
         // Ensure the authenticated student is enrolled in this course
         $enrollment = Enrollment::where('course_id', $course->id)
             ->where('user_id', Auth::id())
@@ -89,30 +91,40 @@ class HomeworkController extends Controller
 
         if (!$enrollment) {
             abort(403, 'You are not enrolled in this course.');
-        }
-
-        // Ensure the homework belongs to the specified course
-        if ($homework->course_id !== $course->id) {
-            abort(404, 'Homework not found in this course.');
         }
 
         // Get the student's submission for this homework
         $submission = HomeworkSubmission::where('homework_id', $homework->id)
             ->where('user_id', Auth::id())
             ->first();
+            
+        // Check if deadline has passed
+        $dueDate = $homework->due_date ?? $homework->deadline;
+        $isExpired = now()->gt($dueDate);
+        
+        // Check for approaching deadline
+        $isDeadlineApproaching = false;
+        if (!$isExpired && !$submission) {
+            $warningTime = now()->addHours(24);
+            $isDeadlineApproaching = $warningTime->gt($dueDate);
+        }
 
         return Inertia::render('Student/Homework/Show', [
             'course' => $course,
             'homework' => $homework,
             'submission' => $submission,
+            'isExpired' => $isExpired,
+            'isDeadlineApproaching' => $isDeadlineApproaching,
         ]);
     }
 
     /**
      * Submit homework assignment.
      */
-    public function submit(Request $request, Course $course, Homework $homework)
+    public function submit(Request $request, Homework $homework)
     {
+        $course = $homework->course;
+        
         // Ensure the authenticated student is enrolled in this course
         $enrollment = Enrollment::where('course_id', $course->id)
             ->where('user_id', Auth::id())
@@ -123,15 +135,18 @@ class HomeworkController extends Controller
             abort(403, 'You are not enrolled in this course.');
         }
 
-        // Ensure the homework belongs to the specified course
-        if ($homework->course_id !== $course->id) {
-            abort(404, 'Homework not found in this course.');
-        }
-
         // Check if due date has passed - use due_date if available, otherwise use deadline
         $dueDate = $homework->due_date ?? $homework->deadline;
+        
+        // Strict deadline enforcement
         if (now()->gt($dueDate)) {
-            return redirect()->back()->with('error', 'The deadline for this homework has passed.');
+            return redirect()->back()->with('error', 'The deadline for this homework has passed. Late submissions are not accepted.');
+        }
+
+        // Check for approaching deadline (within 1 hour) and warn the student
+        $warningWindow = now()->addHour();
+        if ($warningWindow->gt($dueDate)) {
+            session()->flash('warning', 'Deadline is approaching! You have less than 1 hour to submit this homework.');
         }
 
         $request->validate([
@@ -159,9 +174,10 @@ class HomeworkController extends Controller
             }
             
             $existingSubmission->submitted_at = now();
+            $existingSubmission->status = 'submitted'; // Reset status on resubmission
             $existingSubmission->save();
 
-            return redirect()->route('student.homework.show', [$course->id, $homework->id])
+            return redirect()->route('student.homework.show', $homework->id)
                 ->with('success', 'Homework resubmitted successfully.');
         } else {
             // Create new submission
@@ -176,9 +192,10 @@ class HomeworkController extends Controller
             }
             
             $submission->submitted_at = now();
+            $submission->status = 'submitted';
             $submission->save();
 
-            return redirect()->route('student.homework.show', [$course->id, $homework->id])
+            return redirect()->route('student.homework.show', $homework->id)
                 ->with('success', 'Homework submitted successfully.');
         }
     }

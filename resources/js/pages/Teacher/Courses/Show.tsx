@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import AppLayout from '@/layouts/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -51,6 +49,12 @@ interface User {
   email: string;
 }
 
+interface Enrollment {
+  id: number;
+  user: User;
+  status: string;
+}
+
 interface Material {
   id: number;
   title: string;
@@ -83,9 +87,9 @@ interface Course {
   created_at: string;
   updated_at: string;
   students_count: number;
-  enrolled_students: User[];
+  enrollments: Enrollment[];
   materials: Material[];
-  homework: Homework[];
+  homeworks: Homework[];
   certificates: Certificate[];
 }
 
@@ -93,9 +97,13 @@ interface ShowProps extends PageProps {
   course: Course;
 }
 
-export default function Show({ auth, course }: ShowProps) {
+export default function Show({ course }: ShowProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+
+  const handleDelete = (url: string) => {
+    router.delete(url);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -133,7 +141,7 @@ export default function Show({ auth, course }: ShowProps) {
   };
 
   return (
-    <AppLayout user={auth.user}>
+    <AppLayout breadcrumbs={[]}>
       <Head title={course.title} />
 
       <div className="py-12">
@@ -178,9 +186,15 @@ export default function Show({ auth, course }: ShowProps) {
                       <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                         Cancel
                       </Button>
-                      <Link href={route('teacher.courses.destroy', course.id)} method="delete" as="button">
-                        <Button variant="destructive">Delete Course</Button>
-                      </Link>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => {
+                          setIsDeleteDialogOpen(false);
+                          handleDelete(route('teacher.courses.destroy', course.id));
+                        }}
+                      >
+                        Delete Course
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -215,7 +229,7 @@ export default function Show({ auth, course }: ShowProps) {
                 </div>
                 <div className="bg-gray-50 rounded-lg p-4 flex-1">
                   <div className="text-sm text-gray-500">Homework</div>
-                  <div className="font-medium">{course.homework.length}</div>
+                  <div className="font-medium">{course.homeworks.length}</div>
                 </div>
               </div>
             </div>
@@ -301,15 +315,13 @@ export default function Show({ auth, course }: ShowProps) {
                                       <EditIcon className="h-4 w-4" />
                                     </Button>
                                   </Link>
-                                  <Link 
-                                    href={route('teacher.courses.materials.destroy', [course.id, material.id])} 
-                                    method="delete"
-                                    as="button"
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={() => handleDelete(route('teacher.courses.materials.destroy', [course.id, material.id]))}
                                   >
-                                    <Button variant="destructive" size="sm">
-                                      <TrashIcon className="h-4 w-4" />
-                                    </Button>
-                                  </Link>
+                                    <TrashIcon className="h-4 w-4" />
+                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -345,7 +357,7 @@ export default function Show({ auth, course }: ShowProps) {
                   </Link>
                 </div>
 
-                {course.homework.length > 0 ? (
+                {course.homeworks.length > 0 ? (
                   <Card>
                     <CardContent className="p-0">
                       <Table>
@@ -359,7 +371,7 @@ export default function Show({ auth, course }: ShowProps) {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {course.homework.map((homework) => (
+                          {course.homeworks.map((homework) => (
                             <TableRow key={homework.id}>
                               <TableCell className="font-medium">
                                 <Link 
@@ -379,15 +391,13 @@ export default function Show({ auth, course }: ShowProps) {
                                       <EditIcon className="h-4 w-4" />
                                     </Button>
                                   </Link>
-                                  <Link 
-                                    href={route('teacher.courses.homework.destroy', [course.id, homework.id])} 
-                                    method="delete"
-                                    as="button"
+                                  <Button 
+                                    variant="destructive" 
+                                    size="sm"
+                                    onClick={() => handleDelete(route('teacher.courses.homework.destroy', [course.id, homework.id]))}
                                   >
-                                    <Button variant="destructive" size="sm">
-                                      <TrashIcon className="h-4 w-4" />
-                                    </Button>
-                                  </Link>
+                                    <TrashIcon className="h-4 w-4" />
+                                  </Button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -421,7 +431,7 @@ export default function Show({ auth, course }: ShowProps) {
                   </Button>
                 </div>
 
-                {course.enrolled_students.length > 0 ? (
+                {course.enrollments.length > 0 ? (
                   <Card>
                     <CardContent className="p-0">
                       <Table>
@@ -433,24 +443,21 @@ export default function Show({ auth, course }: ShowProps) {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {course.enrolled_students.map((student) => (
-                            <TableRow key={student.id}>
-                              <TableCell className="font-medium">{student.name}</TableCell>
-                              <TableCell>{student.email}</TableCell>
+                          {course.enrollments.map((enrollment) => (
+                            <TableRow key={enrollment.id}>
+                              <TableCell className="font-medium">{enrollment.user.name}</TableCell>
+                              <TableCell>{enrollment.user.email}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end space-x-2">
                                   <Button variant="outline" size="sm">
                                     <UserIcon className="h-4 w-4" />
                                   </Button>
-                                  <Link 
-                                    href={route('teacher.courses.unenroll', [course.id, student.id])} 
-                                    method="delete"
-                                    as="button"
+                                  <button 
+                                    className="text-red-500 hover:text-red-700"
+                                    onClick={() => handleDelete(route('teacher.courses.unenroll', [course.id, enrollment.id]))}
                                   >
-                                    <Button variant="destructive" size="sm">
-                                      <TrashIcon className="h-4 w-4" />
-                                    </Button>
-                                  </Link>
+                                    <TrashIcon className="h-4 w-4" />
+                                  </button>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -520,15 +527,12 @@ export default function Show({ auth, course }: ShowProps) {
                                       <EditIcon className="h-4 w-4" />
                                     </Button>
                                   </Link>
-                                  <Link 
-                                    href={route('teacher.courses.certificates.destroy', [course.id, certificate.id])} 
-                                    method="delete"
-                                    as="button"
+                                  <button 
+                                    className="text-red-500 hover:text-red-700"
+                                    onClick={() => handleDelete(route('teacher.courses.certificates.destroy', [course.id, certificate.id]))}
                                   >
-                                    <Button variant="destructive" size="sm">
-                                      <TrashIcon className="h-4 w-4" />
-                                    </Button>
-                                  </Link>
+                                    <TrashIcon className="h-4 w-4" />
+                                  </button>
                                 </div>
                               </TableCell>
                             </TableRow>

@@ -248,70 +248,55 @@ export default function Create({ auth, course, materialTypes }: CreateProps) {
                   />
                 ) : (
                   <FormItem>
-                    <FormLabel>Upload File {materialType && <span className="text-red-500">*</span>}</FormLabel>
+                    <FormLabel>Upload File <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <div className="flex items-center justify-center w-full">
-                        <label
-                          htmlFor="material_file"
-                          className={cn(
-                            "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100",
-                            selectedFile ? "border-green-300" : "border-gray-300",
-                            !materialType && "opacity-50 cursor-not-allowed"
+                      <div
+                        className={cn(
+                          "border-2 border-dashed rounded-lg p-8 text-center hover:bg-muted/25 transition-colors cursor-pointer relative",
+                          selectedFile ? "border-green-500 bg-green-50" : "border-muted-foreground/25"
+                        )}
+                      >
+                        <Input
+                          type="file"
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          onChange={handleFileChange}
+                          disabled={isSubmitting}
+                        />
+                        <div className="flex flex-col items-center gap-2">
+                          <FileUp className="h-8 w-8 text-muted-foreground" />
+                          {selectedFile ? (
+                            <>
+                              <p className="font-medium">Selected: {selectedFile.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="font-medium">Click to upload or drag and drop</p>
+                              <p className="text-sm text-muted-foreground">
+                                PDFs, documents, images, videos, and audio files are supported
+                              </p>
+                            </>
                           )}
-                        >
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <FileUp className={cn(
-                              "w-8 h-8 mb-2",
-                              selectedFile ? "text-green-500" : "text-gray-500"
-                            )} />
-                            {selectedFile ? (
-                              <div className="text-center">
-                                <p className="mb-2 text-sm text-green-700 font-semibold">
-                                  {selectedFile.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                              </div>
-                            ) : (
-                              <>
-                                <p className="mb-2 text-sm text-gray-500">
-                                  <span className="font-semibold">Click to upload</span> or drag and drop
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Any file up to 10MB
-                                </p>
-                              </>
-                            )}
-                          </div>
-                          <input
-                            id="material_file"
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileChange}
-                            disabled={isSubmitting || !materialType || materialType === "link"}
-                          />
-                        </label>
+                        </div>
                       </div>
                     </FormControl>
-                    <FormDescription>
-                      Upload the file for this material
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
 
-                <div className="flex justify-end gap-4 pt-4">
-                  <Link href={route("admin.courses.materials.index", course.id)}>
-                    <Button variant="outline" type="button" disabled={isSubmitting}>
-                      Cancel
-                    </Button>
-                  </Link>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting || !form.formState.isValid}
+                <div className="flex items-center justify-end space-x-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.visit(route("admin.courses.materials.index", course.id))}
+                    disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Adding..." : "Add Material"}
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Uploading..." : "Add Material"}
                   </Button>
                 </div>
               </form>

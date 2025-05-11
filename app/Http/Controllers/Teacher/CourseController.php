@@ -85,7 +85,7 @@ class CourseController extends Controller
             abort(403, 'You do not have permission to view this course.');
         }
 
-        $course->load(['materials', 'homeworks', 'enrollments.user']);
+        $course->load(['materials', 'homeworks', 'enrollments.user', 'certificates']);
         $course->approved_enrollments_count = $course->enrollments()->where('status', 'approved')->count();
         $course->pending_enrollments_count = $course->enrollments()->where('status', 'pending')->count();
         $course->waitlisted_enrollments_count = $course->enrollments()->where('status', 'waitlisted')->count();
@@ -115,5 +115,102 @@ class CourseController extends Controller
             'course' => $course,
             'enrollments' => $enrollments,
         ]);
+    }
+    
+    /**
+     * Show the form for editing the specified course.
+     */
+    public function edit(Course $course)
+    {
+        // Ensure the authenticated teacher is the owner of this course
+        if ($course->teacher_id !== Auth::id()) {
+            abort(403, 'You do not have permission to edit this course.');
+        }
+
+        return Inertia::render('Teacher/Courses/Edit', [
+            'course' => $course,
+        ]);
+    }
+
+    /**
+     * Update the specified course in storage.
+     */
+    public function update(Request $request, Course $course)
+    {
+        // Ensure the authenticated teacher is the owner of this course
+        if ($course->teacher_id !== Auth::id()) {
+            abort(403, 'You do not have permission to update this course.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'required|string|in:draft,published,archived',
+            'thumbnail' => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->hasFile('thumbnail')) {
+            $path = $request->file('thumbnail')->store('course_thumbnails', 'public');
+            $course->thumbnail_url = '/storage/' . $path;
+        }
+
+        $course->title = $validated['title'];
+        $course->description = $validated['description'];
+        $course->status = $validated['status'];
+        $course->save();
+
+        return redirect()->route('teacher.courses.show', $course->id)
+            ->with('success', 'Course updated successfully.');
+    }
+    
+    /**
+     * Remove the specified course from storage.
+     */
+    public function destroy(Course $course)
+    {
+        // Ensure the authenticated teacher is the owner of this course
+        if ($course->teacher_id !== Auth::id()) {
+            abort(403, 'You do not have permission to delete this course.');
+        }
+
+        // Check if the course has any enrollments or active students
+        $hasEnrollments = $course->enrollments()->exists();
+        
+        if ($hasEnrollments) {
+            return redirect()->route('teacher.courses.show', $course->id)
+                ->with('error', 'Cannot delete course with active enrollments. Please contact an administrator for assistance.');
+        }
+        
+        // Delete related resources first to avoid foreign key constraints
+        $course->materials()->delete();
+        $course->homeworks()->delete();
+        
+        // Delete the course
+        $course->delete();
+
+        return redirect()->route('teacher.courses.index')
+            ->with('success', 'Course deleted successfully.');
+    }
+    
+    /**
+     * Unenroll a student from a course
+     */
+    public function unenrollStudent(Course $course, Enrollment $enrollment)
+    {
+        // Ensure the authenticated teacher is the owner of this course
+        if ($course->teacher_id !== Auth::id()) {
+            abort(403, 'You do not have permission to unenroll students from this course.');
+        }
+        
+        // Ensure the enrollment belongs to this course
+        if ($enrollment->course_id !== $course->id) {
+            abort(400, 'Invalid enrollment record.');
+        }
+        
+        // Delete the enrollment
+        $enrollment->delete();
+        
+        return redirect()->back()
+            ->with('success', 'Student has been unenrolled from the course.');
     }
 }

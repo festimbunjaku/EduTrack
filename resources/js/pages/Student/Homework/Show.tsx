@@ -89,7 +89,7 @@ export default function Show({ auth, course, homework, submission }: ShowProps) 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    post(route('student.homework.submit', [course.id, homework.id]), {
+    post(route('student.homework.submit', homework.id), {
       preserveScroll: true,
       onSuccess: () => {
         setSelectedFile(null);

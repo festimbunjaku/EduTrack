@@ -8,7 +8,6 @@ import {
     Users, 
     UserCheck, 
     Clock, 
-    Calendar, 
     TrendingUp, 
     GraduationCap,
     FileText,
@@ -292,7 +291,7 @@ export default function Dashboard({
                                                 {(teacherCourses || []).filter(c => c.status?.toLowerCase() === 'active').length}
                                             </span>
                                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400">
-                                                <Calendar className="h-6 w-6" />
+                                                <Clock3 className="h-6 w-6" />
                                             </div>
                                         </div>
                                     </CardContent>
@@ -543,12 +542,7 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </CardContent>
-                                    <CardFooter>
-                                        <Button variant="outline" className="w-full" asChild>
-                                            <Link href={route('admin.settings')}>System Settings</Link>
-                                        </Button>
-                                    </CardFooter>
-                                </>
+                                </Card>
                             )}
                         </Card>
                     </section>
@@ -697,14 +691,6 @@ export default function Dashboard({
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="flex justify-between gap-4">
-                                    <Button variant="outline" className="flex-1" asChild>
-                                        <Link href={route('admin.courses.index')}>Manage Courses</Link>
-                                    </Button>
-                                    <Button variant="outline" className="flex-1" asChild>
-                                        <Link href={route('admin.users.index')}>Manage Users</Link>
-                                    </Button>
-                                </CardFooter>
                             </Card>
                         )}
                     </section>

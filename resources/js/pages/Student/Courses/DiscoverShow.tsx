@@ -53,7 +53,7 @@ export default function DiscoverShow({ course }: Props) {
     const syllabus = course?.syllabus || [];
 
     // Parse and normalize schedule data
-    let scheduleObject: Record<string, string> = {};
+    let scheduleObject: Record<string, any> = {};
     if (course?.schedule) {
         if (course.schedule_debug) {
             console.log('Schedule debug:', course.schedule_debug);
@@ -63,6 +63,18 @@ export default function DiscoverShow({ course }: Props) {
             if (typeof course.schedule === 'string') {
                 // If it's a JSON string
                 scheduleObject = JSON.parse(course.schedule);
+            } else if (Array.isArray(course.schedule)) {
+                // If it's an array of schedule items
+                course.schedule.forEach((item: any, index: number) => {
+                    if (item && typeof item === 'object' && item.day) {
+                        // If it has a day property, use it as key
+                        const day = item.day.charAt(0).toUpperCase() + item.day.slice(1);
+                        scheduleObject[day] = item;
+                    } else {
+                        // Use index as fallback key
+                        scheduleObject[`Time slot ${index + 1}`] = item;
+                    }
+                });
             } else if (typeof course.schedule === 'object') {
                 // If it's already an object
                 scheduleObject = course.schedule;
@@ -192,7 +204,7 @@ export default function DiscoverShow({ course }: Props) {
                                         <div>
                                             <h4 className="font-medium mb-3">Class Schedule</h4>
                                             <div className="grid gap-2 px-1 sm:grid-cols-2">
-                                                {Object.entries(scheduleObject).map(([day, time]) => (
+                                                {Object.entries(scheduleObject).map(([day, timeValue]) => (
                                                     <div 
                                                         key={day}
                                                         className="flex items-center p-2.5 rounded-md bg-muted/50 hover:bg-muted transition-colors"
@@ -203,7 +215,11 @@ export default function DiscoverShow({ course }: Props) {
                                                             </div>
                                                             <div>
                                                                 <span className="font-medium text-sm">{day}</span>
-                                                                <div className="text-sm text-muted-foreground">{time}</div>
+                                                                <div className="text-sm text-muted-foreground">
+                                                                    {typeof timeValue === 'object' && timeValue.start_time && timeValue.end_time 
+                                                                        ? `${timeValue.start_time} - ${timeValue.end_time}`
+                                                                        : String(timeValue)}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -325,7 +341,11 @@ export default function DiscoverShow({ course }: Props) {
                                                         <span className="font-medium text-sm">{day}</span>
                                                         <div className="flex items-center gap-1.5">
                                                             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                                            <span className="text-sm">{time}</span>
+                                                            <span className="text-sm">
+                                                                {typeof time === 'object' && time.start_time && time.end_time
+                                                                    ? `${time.start_time} - ${time.end_time}`
+                                                                    : String(time)}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 ))}

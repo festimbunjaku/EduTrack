@@ -29,12 +29,28 @@ interface ScheduleItem {
   end_time: string;
 }
 
+interface Room {
+  id: number;
+  name: string;
+  location: string;
+  capacity: number;
+  is_active: boolean;
+}
+
+interface RoomScheduleItem {
+  day: string;
+  room_id: string;
+  start_time: string;
+  end_time: string;
+}
+
 interface CreateProps extends PageProps {
   teachers: User[];
   statuses: Record<string, string>;
+  rooms: Room[];
 }
 
-export default function Create({ auth, teachers, statuses }: CreateProps) {
+export default function Create({ auth, teachers, statuses, rooms }: CreateProps) {
   // Use Inertia's useForm hook instead of local state
   const { data, setData, post, processing, errors } = useForm({
     title: "",
@@ -47,6 +63,7 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
     start_date: "",
     end_date: "",
     schedule: [] as ScheduleItem[],
+    room_schedules: [] as RoomScheduleItem[],
     teacher_id: "",
     max_enrollment: "20",
     status: "upcoming",
@@ -56,6 +73,7 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
   const [newScheduleDay, setNewScheduleDay] = useState("");
   const [newScheduleStartTime, setNewScheduleStartTime] = useState("");
   const [newScheduleEndTime, setNewScheduleEndTime] = useState("");
+  const [newScheduleRoomId, setNewScheduleRoomId] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -72,10 +90,23 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
       
       setData('schedule', [...data.schedule, newItem]);
       
+      // If room is selected, add to room_schedules as well
+      if (newScheduleRoomId && newScheduleRoomId !== 'none') {
+        const newRoomSchedule = {
+          day: newScheduleDay,
+          room_id: newScheduleRoomId,
+          start_time: newScheduleStartTime,
+          end_time: newScheduleEndTime,
+        };
+        
+        setData('room_schedules', [...data.room_schedules, newRoomSchedule]);
+      }
+      
       // Reset inputs
       setNewScheduleDay("");
       setNewScheduleStartTime("");
       setNewScheduleEndTime("");
+      setNewScheduleRoomId("");
     }
   };
 
@@ -83,6 +114,11 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
     const updatedSchedule = [...data.schedule];
     updatedSchedule.splice(index, 1);
     setData('schedule', updatedSchedule);
+    
+    // Also remove from room_schedules if exists
+    const updatedRoomSchedules = [...data.room_schedules];
+    updatedRoomSchedules.splice(index, 1);
+    setData('room_schedules', updatedRoomSchedules);
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -284,7 +320,25 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
                         onChange={(e) => setNewScheduleEndTime(e.target.value)}
                       />
                     </div>
-                    <div className="flex items-end">
+                    <div className="space-y-2">
+                      <Label htmlFor="room_id">Room (Optional)</Label>
+                      <Select 
+                        value={newScheduleRoomId} 
+                        onValueChange={setNewScheduleRoomId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Room" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Room</SelectItem>
+                          {rooms.map((room) => (
+                            <SelectItem key={room.id} value={room.id.toString()}>
+                              {room.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end md:col-span-4">
                       <Button 
                         type="button" 
                         onClick={handleAddScheduleItem}
@@ -302,21 +356,29 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
                     <div className="mt-4">
                       <h3 className="text-sm font-medium mb-2">Schedule Items:</h3>
                       <div className="space-y-2">
-                        {data.schedule.map((item, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 bg-muted rounded-md">
-                            <span>
-                              {days.find(d => d.value === item.day)?.label}: {item.start_time} - {item.end_time}
-                            </span>
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleRemoveScheduleItem(index)}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
+                        {data.schedule.map((item, index) => {
+                          const roomSchedule = data.room_schedules[index];
+                          const roomName = roomSchedule 
+                            ? rooms.find(r => r.id.toString() === roomSchedule.room_id)?.name 
+                            : null;
+                          
+                          return (
+                            <div key={index} className="flex justify-between items-center p-2 bg-muted rounded-md">
+                              <span>
+                                {days.find(d => d.value === item.day)?.label}: {item.start_time} - {item.end_time}
+                                {roomName && <span className="ml-2 text-sm text-muted-foreground">({roomName})</span>}
+                              </span>
+                              <Button 
+                                type="button" 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleRemoveScheduleItem(index)}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -364,7 +426,7 @@ export default function Create({ auth, teachers, statuses }: CreateProps) {
                         <SelectValue placeholder="Select Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(statuses).map(([value, label]) => (
+                        {statuses && Object.entries(statuses || {}).map(([value, label]) => (
                           <SelectItem key={value} value={value}>
                             {label}
                           </SelectItem>

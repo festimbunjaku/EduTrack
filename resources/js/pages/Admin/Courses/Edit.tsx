@@ -365,7 +365,7 @@ export default function Edit({ auth, teachers, statuses, course }: EditProps) {
                         <SelectValue placeholder="Select Status" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.entries(statuses).map(([value, label]) => (
+                        {statuses && Object.entries(statuses || {}).map(([value, label]) => (
                           <SelectItem key={value} value={value}>
                             {label}
                           </SelectItem>

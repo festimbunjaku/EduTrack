@@ -242,29 +242,44 @@ export default function Index({
           </div>
         </div>
       </CardContent>
-      <div className="flex justify-between items-center p-4 bg-muted/30 border-t">
-        <Link href={route("admin.courses.show", course.id)}>
-          <Button size="sm" variant="secondary">
-            <Eye className="w-4 h-4 mr-2" />
-            View Details
-          </Button>
-        </Link>
-        <div className="flex space-x-1">
-          <Link href={route("admin.courses.materials.index", course.id)}>
-            <Button size="icon" variant="ghost" title="Materials">
-              <Book className="h-4 w-4 text-blue-500" />
+      <div className="p-4 border-t">
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <Link href={route("admin.courses.materials.index", course.id)} className="w-full">
+            <Button variant="outline" className="w-full flex flex-col h-auto py-3 px-2">
+              <Book className="h-5 w-5 text-blue-500 mb-1" />
+              <span className="text-xs">Materials</span>
             </Button>
           </Link>
-          <Link href={route("admin.courses.homework.index", course.id)}>
-            <Button size="icon" variant="ghost" title="Homework">
-              <FileText className="h-4 w-4 text-green-500" />
+          <Link href={route("admin.courses.homework.index", course.id)} className="w-full">
+            <Button variant="outline" className="w-full flex flex-col h-auto py-3 px-2">
+              <FileText className="h-5 w-5 text-green-500 mb-1" />
+              <span className="text-xs">Homework</span>
             </Button>
           </Link>
-          <Link href={route("admin.courses.certificates.index", course.id)}>
-            <Button size="icon" variant="ghost" title="Certificates">
-              <Award className="h-4 w-4 text-amber-500" />
+          <Link href={route("admin.courses.certificates.index", course.id)} className="w-full">
+            <Button variant="outline" className="w-full flex flex-col h-auto py-3 px-2">
+              <Award className="h-5 w-5 text-amber-500 mb-1" />
+              <span className="text-xs">Certificates</span>
             </Button>
           </Link>
+        </div>
+        <div className="flex justify-between items-center">
+          <Link href={route("admin.courses.show", course.id)}>
+            <Button size="sm" variant="secondary">
+              <Eye className="w-4 h-4 mr-2" />
+              View Details
+            </Button>
+          </Link>
+          <div className="flex space-x-1">
+            <Link href={route("admin.courses.edit", course.id)}>
+              <Button size="icon" variant="ghost">
+                <PencilLine className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button size="icon" variant="ghost" onClick={() => openDeleteDialog(course)}>
+              <Trash className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
         </div>
       </div>
     </Card>

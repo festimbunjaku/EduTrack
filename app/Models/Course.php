@@ -140,4 +140,12 @@ class Course extends Model
             return !in_array($student->id, $existingCertificates);
         })->values();
     }
+
+    /**
+     * Get the room schedules for the course.
+     */
+    public function roomSchedules(): HasMany
+    {
+        return $this->hasMany(RoomSchedule::class);
+    }
 }

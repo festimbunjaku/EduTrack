@@ -30,6 +30,8 @@ class Homework extends Model
         'deadline',
         'due_date',
         'attachment_path',
+        'attachment_name',
+        'max_score',
     ];
 
     /**

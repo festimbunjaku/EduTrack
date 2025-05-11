@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, FileIcon, FolderIcon, LinkIcon, PlusIcon, SearchIcon, VideoIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { CourseMaterial, Course } from '@/types';
+import { BookOpenIcon, FileTextIcon } from 'lucide-react';
 
 interface Material {
   id: number;
@@ -41,13 +44,16 @@ interface Course {
 
 interface AllMaterialsProps extends PageProps {
   courses: Course[];
+  materials: (CourseMaterial & {
+    course: Course;
+  })[];
 }
 
-export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
+export default function AllMaterials({ courses = [], materials = [] }: AllMaterialsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filter materials based on search query
-  const filteredCourses = courses.map(course => ({
+  const filteredCourses = (courses || []).map(course => ({
     ...course,
     materials: course.materials.filter(material => 
       material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -56,10 +62,10 @@ export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
   })).filter(course => course.materials.length > 0);
   
   // Count total materials
-  const totalMaterials = courses.reduce((acc, course) => acc + course.materials.length, 0);
+  const totalMaterials = (courses || []).reduce((acc, course) => acc + course.materials.length, 0);
   
   // Get all material types
-  const materialTypes = [...new Set(courses.flatMap(course => 
+  const materialTypes = [...new Set((courses || []).flatMap(course => 
     course.materials.map(material => material.type)
   ))];
   
@@ -67,13 +73,13 @@ export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'document':
-        return <FileIcon className="h-5 w-5" />;
+        return <FileTextIcon className="h-4 w-4 text-blue-500" />;
       case 'video':
-        return <VideoIcon className="h-5 w-5" />;
+        return <BookOpenIcon className="h-4 w-4 text-purple-500" />;
       case 'link':
-        return <LinkIcon className="h-5 w-5" />;
+        return <LinkIcon className="h-4 w-4 text-green-500" />;
       default:
-        return <FileIcon className="h-5 w-5" />;
+        return <FileTextIcon className="h-4 w-4 text-gray-500" />;
     }
   };
   
@@ -87,8 +93,26 @@ export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
     });
   };
 
+  // Function to get badge based on material type
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case 'document':
+        return <Badge className="bg-blue-100 text-blue-800">Document</Badge>;
+      case 'video':
+        return <Badge className="bg-purple-100 text-purple-800">Video</Badge>;
+      case 'link':
+        return <Badge className="bg-green-100 text-green-800">Link</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">{type}</Badge>;
+    }
+  };
+
   return (
-    <AppLayout user={auth.user}>
+    <AppLayout
+      breadcrumbs={[
+        { label: 'Materials', href: '#' }
+      ]}
+    >
       <Head title="Course Materials" />
 
       <div className="py-12">
@@ -149,16 +173,7 @@ export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
                                 <CardHeader className="pb-2">
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
-                                      <Badge 
-                                        className={
-                                          material.type === 'document' ? 'bg-blue-100 text-blue-800' : 
-                                          material.type === 'video' ? 'bg-red-100 text-red-800' : 
-                                          'bg-green-100 text-green-800'
-                                        }
-                                      >
-                                        {getTypeIcon(material.type)}
-                                        <span className="ml-1">{material.type}</span>
-                                      </Badge>
+                                      {getTypeBadge(material.type)}
                                       <h3 className="text-base font-medium mt-2">{material.title}</h3>
                                     </div>
                                   </div>
@@ -198,7 +213,7 @@ export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
                         <p className="text-gray-500 mb-6">
                           You haven't created any course materials yet. Add materials to your courses to get started.
                         </p>
-                        {courses.length > 0 && (
+                        {courses && courses.length > 0 && (
                           <Link href={route('teacher.courses.materials.create', courses[0].id)}>
                             <Button>Create Material</Button>
                           </Link>
@@ -248,16 +263,7 @@ export default function AllMaterials({ auth, courses }: AllMaterialsProps) {
                                   <CardHeader className="pb-2">
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1">
-                                        <Badge 
-                                          className={
-                                            material.type === 'document' ? 'bg-blue-100 text-blue-800' : 
-                                            material.type === 'video' ? 'bg-red-100 text-red-800' : 
-                                            'bg-green-100 text-green-800'
-                                          }
-                                        >
-                                          {getTypeIcon(material.type)}
-                                          <span className="ml-1">{material.type}</span>
-                                        </Badge>
+                                        {getTypeBadge(material.type)}
                                         <h3 className="text-base font-medium mt-2">{material.title}</h3>
                                       </div>
                                     </div>

@@ -224,9 +224,226 @@ class CourseMaterialController extends Controller
             return redirect()->back()->with('error', 'File not found.');
         }
         
-        return Storage::disk('public')->download(
-            $material->file_path, 
+        return response()->download(
+            storage_path('app/public/' . $material->file_path), 
             $material->file_name
         );
+    }
+    
+    /**
+     * Display all materials across courses.
+     */
+    public function allMaterials()
+    {
+        $materials = CourseMaterial::with('course')->get();
+        
+        return Inertia::render('Admin/Materials/AllMaterials', [
+            'materials' => $materials,
+        ]);
+    }
+    
+    /**
+     * Display a specific material regardless of course (admin-only).
+     */
+    public function showAny(CourseMaterial $material)
+    {
+        $material->load('course');
+        
+        return Inertia::render('Admin/Materials/Show', [
+            'material' => $material,
+            'course' => $material->course,
+        ]);
+    }
+    
+    /**
+     * Show the form for editing any material regardless of course (admin-only).
+     */
+    public function editAny(CourseMaterial $material)
+    {
+        $material->load('course');
+        
+        $materialTypes = [
+            'document' => 'Document',
+            'video' => 'Video',
+            'link' => 'External Link',
+            'image' => 'Image',
+            'audio' => 'Audio',
+            'other' => 'Other',
+        ];
+        
+        return Inertia::render('Admin/Materials/Edit', [
+            'material' => $material,
+            'course' => $material->course,
+            'materialTypes' => $materialTypes,
+        ]);
+    }
+    
+    /**
+     * Update any material regardless of course (admin-only).
+     */
+    public function updateAny(Request $request, CourseMaterial $material)
+    {
+        $course = $material->course;
+        
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'required|string|in:document,video,link,image,audio,other',
+            'file' => $request->hasFile('file') ? 'file|max:10240' : 'nullable',
+            'link' => $request->type === 'link' ? 'required_without:file|url' : 'nullable',
+        ]);
+        
+        $material->title = $validated['title'];
+        $material->description = $validated['description'] ?? null;
+        $material->type = $validated['type'];
+        
+        // Handle link type
+        if ($validated['type'] === 'link' && isset($validated['link'])) {
+            // Remove old file if changing from file to link
+            if ($material->file_path && !str_starts_with($material->file_path, 'http')) {
+                Storage::disk('public')->delete($material->file_path);
+            }
+            
+            $material->file_path = $validated['link'];
+            $material->file_name = $validated['title'];
+            $material->file_size = null;
+            $material->file_extension = null;
+        } 
+        // Handle file upload
+        else if ($request->hasFile('file')) {
+            // Remove old file
+            if ($material->file_path && !str_starts_with($material->file_path, 'http')) {
+                Storage::disk('public')->delete($material->file_path);
+            }
+            
+            $file = $request->file('file');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            
+            // Store file
+            $path = $file->storeAs(
+                'course_materials/' . $course->id,
+                $fileName,
+                'public'
+            );
+            
+            $material->file_path = $path;
+            $material->file_name = $file->getClientOriginalName();
+            $material->file_size = $file->getSize();
+            $material->file_extension = $file->getClientOriginalExtension();
+        }
+        
+        $material->save();
+        
+        return redirect()->route('admin.all.materials.index')
+                         ->with('success', 'Material updated successfully.');
+    }
+    
+    /**
+     * Remove any material regardless of course (admin-only).
+     */
+    public function destroyAny(CourseMaterial $material)
+    {
+        // Delete file if it exists
+        if ($material->file_path && !str_starts_with($material->file_path, 'http')) {
+            Storage::disk('public')->delete($material->file_path);
+        }
+        
+        $material->delete();
+        
+        return redirect()->route('admin.all.materials.index')
+                         ->with('success', 'Material deleted successfully.');
+    }
+    
+    /**
+     * Download any material file regardless of course (admin-only).
+     */
+    public function downloadAny(CourseMaterial $material)
+    {
+        // Check if it's a file (not a link)
+        if (!$material->file_path || str_starts_with($material->file_path, 'http')) {
+            return redirect()->back()->with('error', 'This material cannot be downloaded.');
+        }
+        
+        // Check if file exists
+        if (!Storage::disk('public')->exists($material->file_path)) {
+            return redirect()->back()->with('error', 'File not found.');
+        }
+        
+        return response()->download(
+            storage_path('app/public/' . $material->file_path), 
+            $material->file_name
+        );
+    }
+    
+    /**
+     * Show material creation form for any course (admin only)
+     */
+    public function createAny()
+    {
+        $materialTypes = [
+            'document' => 'Document',
+            'video' => 'Video',
+            'link' => 'External Link',
+            'image' => 'Image',
+            'audio' => 'Audio',
+            'other' => 'Other',
+        ];
+        
+        $courses = Course::select('id', 'title')->get();
+        
+        return Inertia::render('Admin/Materials/Create', [
+            'materialTypes' => $materialTypes,
+            'courses' => $courses,
+        ]);
+    }
+    
+    /**
+     * Store a new material for any course (admin only)
+     */
+    public function storeAny(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'type' => 'required|string|in:document,video,link,image,audio,other',
+            'course_id' => 'required|exists:courses,id',
+            'material_file' => $request->type !== 'link' ? 'required|file|max:10240' : 'nullable',
+            'link_url' => $request->type === 'link' ? 'required|url' : 'nullable',
+        ]);
+        
+        $material = new CourseMaterial([
+            'course_id' => $validated['course_id'],
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'type' => $validated['type'],
+        ]);
+        
+        // Handle link type
+        if ($validated['type'] === 'link') {
+            $material->file_path = $validated['link_url'];
+            $material->file_name = $validated['title'];
+        } 
+        // Handle file upload
+        else if ($request->hasFile('material_file')) {
+            $file = $request->file('material_file');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            
+            // Store file
+            $path = $file->storeAs(
+                'course_materials/' . $validated['course_id'],
+                $fileName,
+                'public'
+            );
+            
+            $material->file_path = $path;
+            $material->file_name = $file->getClientOriginalName();
+            $material->file_size = $file->getSize();
+            $material->file_extension = $file->getClientOriginalExtension();
+        }
+        
+        $material->save();
+        
+        return redirect()->route('admin.all.materials.index')
+                         ->with('success', 'Material added successfully.');
     }
 } 

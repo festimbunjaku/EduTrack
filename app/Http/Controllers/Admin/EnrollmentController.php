@@ -94,6 +94,37 @@ class EnrollmentController extends Controller
         // Check if the course has capacity
         $course = $enrollment->course;
         
+        // Check for room capacity restrictions
+        $roomCapacityExceeded = false;
+        $roomSchedules = $course->roomSchedules()->with('room')->get();
+        
+        if ($roomSchedules->isNotEmpty()) {
+            // Get the smallest room capacity
+            $smallestRoomCapacity = $roomSchedules->min(function($schedule) {
+                return $schedule->room->capacity;
+            });
+            
+            // Check if approving this enrollment would exceed room capacity
+            if ($course->getEnrollmentCount() >= $smallestRoomCapacity && $enrollment->status !== 'approved') {
+                $roomCapacityExceeded = true;
+                $roomName = $roomSchedules->where('room.capacity', $smallestRoomCapacity)->first()->room->name;
+            }
+        }
+        
+        if ($roomCapacityExceeded) {
+            // Put the enrollment on waitlist if room capacity is exceeded
+            $lastWaitlist = Enrollment::where('course_id', $course->id)
+                ->where('status', 'waitlisted')
+                ->max('waitlist_position');
+                
+            $enrollment->status = 'waitlisted';
+            $enrollment->waitlist_position = $lastWaitlist ? $lastWaitlist + 1 : 1;
+            $enrollment->notes = ($request->input('notes') ?? '') . " (Waitlisted due to room capacity limit in $roomName)";
+            $enrollment->save();
+            
+            return redirect()->back()->with('warning', "Room capacity limit reached. Enrollment added to waitlist.");
+        }
+        
         if ($course->isFull() && $enrollment->status !== 'approved') {
             // Put the enrollment on waitlist if the course is full
             $lastWaitlist = Enrollment::where('course_id', $course->id)
