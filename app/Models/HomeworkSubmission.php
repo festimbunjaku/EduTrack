@@ -18,18 +18,31 @@ class HomeworkSubmission extends Model
     protected $fillable = [
         'homework_id',
         'user_id',
-        'submission_file',
-        'comments',
+        'content',
+        'attachment',
         'status',
-        'teacher_comments',
+        'grade',
+        'feedback',
+        'submitted_at',
+        'graded_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'graded_at' => 'datetime',
     ];
 
     /**
      * Submission status constants
      */
-    const STATUS_PENDING = 'pending';
-    const STATUS_APPROVED = 'approved';
-    const STATUS_DENIED = 'denied';
+    const STATUS_DRAFT = 'draft';
+    const STATUS_SUBMITTED = 'submitted';
+    const STATUS_GRADED = 'graded';
 
     /**
      * Get the homework that this submission belongs to.

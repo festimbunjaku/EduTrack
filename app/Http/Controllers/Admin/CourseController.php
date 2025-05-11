@@ -29,10 +29,6 @@ class CourseController extends Controller
                   ->orWhere('description', 'like', "%{$request->search}%");
         }
         
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        
         if ($request->filled('teacher_id')) {
             $query->where('teacher_id', $request->teacher_id);
         }
@@ -49,7 +45,6 @@ class CourseController extends Controller
 
         $filters = [
             'search' => $request->search,
-            'status' => $request->status,
             'teacher_id' => $request->teacher_id,
             'sort_field' => $sortField,
             'sort_direction' => $sortDirection,
@@ -59,12 +54,6 @@ class CourseController extends Controller
             'courses' => $courses,
             'teachers' => $teachers,
             'filters' => $filters,
-            'statuses' => [
-                Course::STATUS_UPCOMING => 'Upcoming',
-                Course::STATUS_ACTIVE => 'Active',
-                Course::STATUS_COMPLETED => 'Completed',
-                Course::STATUS_CANCELLED => 'Cancelled',
-            ],
         ]);
     }
 
@@ -77,12 +66,6 @@ class CourseController extends Controller
         
         return Inertia::render('Admin/Courses/Create', [
             'teachers' => $teachers,
-            'statuses' => [
-                Course::STATUS_UPCOMING => 'Upcoming',
-                Course::STATUS_ACTIVE => 'Active',
-                Course::STATUS_COMPLETED => 'Completed',
-                Course::STATUS_CANCELLED => 'Cancelled',
-            ],
         ]);
     }
 
@@ -103,7 +86,6 @@ class CourseController extends Controller
             'schedule' => 'required|array',
             'teacher_id' => 'required|exists:users,id',
             'max_enrollment' => 'required|integer|min:1|max:20',
-            'status' => ['required', Rule::in(['upcoming', 'active', 'completed', 'cancelled'])],
             'location' => 'required|string|max:255',
             'image' => 'nullable|image|max:1024',
         ]);
@@ -145,12 +127,6 @@ class CourseController extends Controller
         return Inertia::render('Admin/Courses/Edit', [
             'course' => $course,
             'teachers' => $teachers,
-            'statuses' => [
-                Course::STATUS_UPCOMING => 'Upcoming',
-                Course::STATUS_ACTIVE => 'Active',
-                Course::STATUS_COMPLETED => 'Completed',
-                Course::STATUS_CANCELLED => 'Cancelled',
-            ],
         ]);
     }
 
@@ -171,7 +147,6 @@ class CourseController extends Controller
             'schedule' => 'required|array',
             'teacher_id' => 'required|exists:users,id',
             'max_enrollment' => 'required|integer|min:1|max:20',
-            'status' => ['required', Rule::in(['upcoming', 'active', 'completed', 'cancelled'])],
             'location' => 'required|string|max:255',
             'image' => 'nullable|image|max:1024',
         ]);

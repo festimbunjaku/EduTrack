@@ -1,346 +1,435 @@
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { PageProps } from '@/types';
+import AppLayout from '@/layouts/AppLayout';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Calendar, Clock, Award, FileCheck, GraduationCap, BookmarkPlus, TrendingUp, BookOpen as Book, ExternalLink } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  BookOpenIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  ClipboardListIcon,
+  ClockIcon,
+  FolderIcon,
+  MoreHorizontalIcon,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Student',
-        href: '/student/dashboard',
-    },
-    {
-        title: 'Dashboard',
-        href: '/student/dashboard',
-    },
-];
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  status?: string;
+  progress?: number;
+  unread_materials?: number;
+  image?: string | null;
+  teacher?: {
+    name: string;
+  };
+}
 
-export default function StudentDashboard() {
-    return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Student Dashboard" />
-            <div className="flex flex-col gap-6 p-6">
-                {/* Welcome Banner */}
-                <section className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white shadow-lg">
-                    <div className="relative z-10 flex flex-col gap-2">
-                        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Welcome back, Student!</h1>
-                        <p className="max-w-2xl text-blue-100">Track your learning journey, manage assignments, and stay on top of your courses.</p>
-                        <div className="mt-3 flex gap-3">
-                            <Button variant="secondary" size="sm" className="bg-white/20 text-white hover:bg-white/30">
-                                <BookOpen className="mr-2 h-4 w-4" />
-                                My Courses
-                            </Button>
-                            <Button variant="secondary" size="sm" className="bg-white/20 text-white hover:bg-white/30">
-                                <Calendar className="mr-2 h-4 w-4" />
-                                Calendar
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="absolute right-0 top-0 -mt-12 -mr-12 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 -mb-16 -ml-16 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
-                </section>
+interface Homework {
+  id: number;
+  title: string;
+  due_date: string;
+  is_submitted?: boolean;
+  course: {
+    id: number;
+    title: string;
+  };
+}
 
-                {/* Stats Overview */}
-                <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Enrolled Courses</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between">
-                                <div className="text-3xl font-bold">4</div>
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                    <Book className="h-6 w-6" />
-                                </div>
-                            </div>
-                            <p className="mt-1 text-xs text-emerald-500">1 new this semester</p>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Assignments</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between">
-                                <div className="text-3xl font-bold">12</div>
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                                    <FileCheck className="h-6 w-6" />
-                                </div>
-                            </div>
-                            <p className="mt-1 text-xs text-amber-500">3 pending submission</p>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Average Grade</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between">
-                                <div className="text-3xl font-bold">A-</div>
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                                    <Award className="h-6 w-6" />
-                                </div>
-                            </div>
-                            <p className="mt-1 text-xs text-emerald-500">Up from B+ last semester</p>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card className="border-0 shadow-sm">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">Learning Hours</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex items-center justify-between">
-                                <div className="text-3xl font-bold">24.5</div>
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600">
-                                    <Clock className="h-6 w-6" />
-                                </div>
-                            </div>
-                            <p className="mt-1 text-xs text-emerald-500">+8.5 hours this week</p>
-                        </CardContent>
-                    </Card>
-                </section>
+interface Submission {
+  id: number;
+  submitted_at: string;
+  status: string;
+  grade?: number;
+  homework: {
+    id: number;
+    title: string;
+    course: {
+      id: number;
+      title: string;
+    }
+  };
+}
 
-                {/* Main Content */}
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Current Courses */}
-                    <Card className="col-span-2 border-0 shadow-sm">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle>Current Courses</CardTitle>
-                                    <CardDescription>Track your progress in enrolled courses</CardDescription>
+interface DashboardProps extends PageProps {
+  enrolledCourses: Course[];
+  upcomingHomework: Homework[];
+  recentSubmissions: Submission[];
+  stats: {
+    enrolledCourses: number;
+    completedHomework: number;
+    pendingHomework: number;
+  };
+}
+
+export default function Dashboard({
+  auth,
+  enrolledCourses,
+  upcomingHomework,
+  recentSubmissions,
+  stats,
+}: DashboardProps) {
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) {
+      return 'Today';
+    } else if (diffInDays === 1) {
+      return 'Yesterday';
+    } else if (diffInDays < 7) {
+      return `${diffInDays} days ago`;
+    } else {
+      return formatDate(dateString);
+    }
+  };
+
+  // Get status badge color
+  const getStatusBadgeColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800 hover:bg-green-100';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-100';
+      case 'upcoming':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+    }
+  };
+
+  // Get activity icon
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'material_added':
+        return <FolderIcon className="h-5 w-5 text-blue-500" />;
+      case 'homework_assigned':
+        return <ClipboardListIcon className="h-5 w-5 text-orange-500" />;
+      case 'homework_graded':
+        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+      case 'course_enrolled':
+        return <BookOpenIcon className="h-5 w-5 text-purple-500" />;
+      default:
+        return <FolderIcon className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  return (
+    <AppLayout user={auth.user}>
+      <Head title="Student Dashboard" />
+
+      <div className="py-12">
+        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold text-gray-800">Welcome back, {auth.user.name}!</h1>
+            <p className="text-gray-600">Here's an overview of your learning progress.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 rounded-full bg-blue-100 mr-4">
+                    <BookOpenIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Enrolled Courses</p>
+                    <p className="text-2xl font-bold">{stats.enrolledCourses}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 rounded-full bg-green-100 mr-4">
+                    <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Completed Homework</p>
+                    <p className="text-2xl font-bold">{stats.completedHomework}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <div className="p-2 rounded-full bg-amber-100 mr-4">
+                    <ClipboardListIcon className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Pending Homework</p>
+                    <p className="text-2xl font-bold">{stats.pendingHomework}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Your Courses</CardTitle>
+                    <Link href={route('student.courses.index')}>
+                      <Button variant="outline" size="sm">View All</Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {enrolledCourses && enrolledCourses.length > 0 ? (
+                    <div className="divide-y">
+                      {enrolledCourses.map((course) => (
+                        <div key={course.id} className="p-4 flex items-start">
+                          <div className="flex-shrink-0 mr-4">
+                            {course.image ? (
+                              <img 
+                                src={course.image} 
+                                alt={course.title} 
+                                className="w-16 h-16 object-cover rounded"
+                              />
+                            ) : (
+                              <div className="w-16 h-16 flex items-center justify-center bg-gray-100 rounded">
+                                <BookOpenIcon className="h-8 w-8 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center mb-1">
+                              <Link href={route('student.courses.show', course.id)}>
+                                <h3 className="text-base font-medium text-blue-600 hover:text-blue-800 truncate">
+                                  {course.title}
+                                </h3>
+                              </Link>
+                              {course.status && (
+                                <Badge className={`ml-2 ${getStatusBadgeColor(course.status)}`}>
+                                  {course.status}
+                                </Badge>
+                              )}
+                              {course.unread_materials && course.unread_materials > 0 && (
+                                <Badge className="ml-2 bg-red-100 text-red-800">
+                                  {course.unread_materials} new
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500 mb-2">
+                              Instructor: {course.teacher?.name || 'Unknown'}
+                            </p>
+                            {course.progress !== undefined && (
+                              <>
+                                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                  <div 
+                                    className="bg-blue-600 h-1.5 rounded-full" 
+                                    style={{ width: `${course.progress}%` }}
+                                  ></div>
                                 </div>
-                                <Button variant="outline" size="sm">
-                                    Browse All Courses
+                                <p className="text-xs text-gray-500 mt-1">{course.progress}% complete</p>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 ml-2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontalIcon className="h-4 w-4" />
                                 </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { 
-                                        name: "Introduction to Programming", 
-                                        instructor: "Dr. Jane Smith",
-                                        progress: 78, 
-                                        nextLesson: "Arrays and Loops",
-                                        nextDate: "Tomorrow, 10:00 AM"
-                                    },
-                                    { 
-                                        name: "Data Structures and Algorithms", 
-                                        instructor: "Prof. Michael Brown",
-                                        progress: 45, 
-                                        nextLesson: "Linked Lists",
-                                        nextDate: "Wednesday, 2:00 PM"
-                                    },
-                                    { 
-                                        name: "Web Development Fundamentals", 
-                                        instructor: "Sarah Johnson",
-                                        progress: 92, 
-                                        nextLesson: "Responsive Design",
-                                        nextDate: "Today, 4:00 PM"
-                                    },
-                                    { 
-                                        name: "Database Management", 
-                                        instructor: "Dr. Robert Chen",
-                                        progress: 32, 
-                                        nextLesson: "SQL Joins",
-                                        nextDate: "Thursday, 11:00 AM"
-                                    }
-                                ].map((course, i) => (
-                                    <div key={i} className="rounded-lg border p-4 transition-colors hover:bg-muted/20">
-                                        <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                                            <div>
-                                                <h3 className="font-medium">{course.name}</h3>
-                                                <p className="text-xs text-muted-foreground">Instructor: {course.instructor}</p>
-                                            </div>
-                                            <Badge variant="outline" className="shrink-0 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                                                {course.progress}% Complete
-                                            </Badge>
-                                        </div>
-                                        <div className="mt-3">
-                                            <div className="h-2 w-full rounded-full bg-gray-100">
-                                                <div 
-                                                    className="h-2 rounded-full bg-blue-500" 
-                                                    style={{ width: `${course.progress}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                        <div className="mt-3 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-                                            <div className="flex items-center gap-1.5 text-xs">
-                                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                                <span>Next: {course.nextLesson}</span>
-                                                <span className="text-muted-foreground">• {course.nextDate}</span>
-                                            </div>
-                                            <Button variant="outline" size="sm">
-                                                Continue Learning
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="outline" className="w-full">View All Enrolled Courses</Button>
-                        </CardFooter>
-                    </Card>
-
-                    {/* Upcoming Assignments */}
-                    <div className="flex flex-col gap-6">
-                        <Card className="border-0 shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Upcoming Assignments</CardTitle>
-                                <CardDescription>Don't miss your deadlines</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {[
-                                        { title: "Programming Assignment 2", course: "CS101", due: "Today", urgent: true },
-                                        { title: "Algorithm Analysis", course: "CS201", due: "Tomorrow", urgent: true },
-                                        { title: "Web Project Phase 1", course: "CS220", due: "In 3 days", urgent: false },
-                                        { title: "Database Query Design", course: "CS330", due: "Next week", urgent: false }
-                                    ].map((assignment, i) => (
-                                        <div key={i} className="flex items-start gap-3 rounded-lg border p-3">
-                                            <div className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                                                assignment.urgent ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
-                                            }`}>
-                                                <Calendar className="h-4 w-4" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="text-sm font-medium">{assignment.title}</h4>
-                                                <div className="flex items-center gap-2 text-xs">
-                                                    <Badge variant="outline" className="px-1.5 py-0">{assignment.course}</Badge>
-                                                    <span className={`${assignment.urgent ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
-                                                        Due: {assignment.due}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <Button variant="ghost" size="sm">Start</Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button variant="outline" className="w-full">View All Assignments</Button>
-                            </CardFooter>
-                        </Card>
-
-                        {/* Learning Resources */}
-                        <Card className="border-0 shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Learning Resources</CardTitle>
-                                <CardDescription>Additional materials to help you excel</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {[
-                                        { title: "Programming Fundamentals eBook", type: "E-Book", course: "CS101" },
-                                        { title: "Algorithm Visualization Tool", type: "Interactive", course: "CS201" },
-                                        { title: "Web Dev Framework Tutorial", type: "Video", course: "CS220" },
-                                        { title: "SQL Practice Problems", type: "Exercise", course: "CS330" }
-                                    ].map((resource, i) => (
-                                        <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
-                                            <BookmarkPlus className="h-4 w-4 text-blue-600" />
-                                            <div className="flex-1">
-                                                <h4 className="text-sm font-medium">{resource.title}</h4>
-                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                    <span>{resource.type}</span>
-                                                    <span>•</span>
-                                                    <span>{resource.course}</span>
-                                                </div>
-                                            </div>
-                                            <Button variant="ghost" size="sm">
-                                                <ExternalLink className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                    </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button variant="outline" className="w-full">Browse Library</Button>
-                            </CardFooter>
-                        </Card>
-                    </div>
-                </div>
-                
-                {/* Learning Progress */}
-                <Card className="border-0 shadow-sm">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Learning Progress</CardTitle>
-                                <CardDescription>Your academic journey at a glance</CardDescription>
-                            </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem>
+                                  <Link href={route('student.courses.show', course.id)}>
+                                    View Course
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Mark as Completed</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-8 md:grid-cols-2">
-                            <div>
-                                <h3 className="mb-4 text-sm font-medium text-muted-foreground">Course Completion</h3>
-                                <div className="space-y-4">
-                                    {[
-                                        { name: "Term 1 Courses", completed: 100, total: 3, color: "bg-emerald-500" },
-                                        { name: "Term 2 Courses", completed: 100, total: 4, color: "bg-emerald-500" },
-                                        { name: "Current Term", completed: 2, total: 4, color: "bg-blue-500" },
-                                        { name: "Overall Degree Progress", completed: 48, total: 120, color: "bg-indigo-500" }
-                                    ].map((term, i) => (
-                                        <div key={i} className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-sm font-medium">{term.name}</h4>
-                                                <div className="flex items-center gap-1 text-sm">
-                                                    <span className="font-medium">{term.completed}</span>
-                                                    <span className="text-muted-foreground">/ {term.total} credits</span>
-                                                </div>
-                                            </div>
-                                            <div className="h-2 w-full rounded-full bg-gray-100">
-                                                <div 
-                                                    className={`h-2 rounded-full ${term.color}`} 
-                                                    style={{ width: `${(term.completed / term.total) * 100}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    ))}
+                      ))}
                     </div>
-                </div>
-                
-                            <div>
-                                <h3 className="mb-4 text-sm font-medium text-muted-foreground">Skills Development</h3>
-                                <div className="space-y-4">
-                                    {[
-                                        { name: "Programming", level: 75, color: "bg-blue-500" },
-                                        { name: "Data Analysis", level: 60, color: "bg-purple-500" },
-                                        { name: "Web Development", level: 85, color: "bg-emerald-500" },
-                                        { name: "Database Management", level: 45, color: "bg-amber-500" }
-                                    ].map((skill, i) => (
-                                        <div key={i} className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-sm font-medium">{skill.name}</h4>
-                                                <p className="text-sm font-medium">{skill.level}%</p>
-                                            </div>
-                                            <div className="h-2 w-full rounded-full bg-gray-100">
-                                                <div 
-                                                    className={`h-2 rounded-full ${skill.color}`} 
-                                                    style={{ width: `${skill.level}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                  ) : (
+                    <div className="p-6 text-center">
+                      <p className="text-gray-500 mb-4">You haven't enrolled in any courses yet.</p>
+                      <Link href={route('student.courses.discover')}>
+                        <Button>Discover Courses</Button>
+                      </Link>
                     </div>
-                </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button variant="outline" className="w-full">
-                            <GraduationCap className="mr-2 h-4 w-4" />
-                            View Complete Academic Record
-                        </Button>
-                    </CardFooter>
-                </Card>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-center">
+                    <CardTitle>Recent Submissions</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {recentSubmissions && recentSubmissions.length > 0 ? (
+                    <div className="divide-y">
+                      {recentSubmissions.map((submission) => (
+                        <div key={submission.id} className="p-4 flex items-start">
+                          <div className="p-2 rounded-full bg-gray-100 mr-3 flex-shrink-0">
+                            <ClipboardListIcon className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{submission.homework.title}</p>
+                            <p className="text-xs text-gray-500">
+                              <span>Course: </span>
+                              <Link 
+                                href={route('student.courses.show', submission.homework.course.id)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                {submission.homework.course.title}
+                              </Link>
+                            </p>
+                            {submission.status === 'graded' && (
+                              <Badge className="mt-1 bg-green-100 text-green-800">
+                                Grade: {submission.grade}/100
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                            {formatRelativeTime(submission.submitted_at)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center">
+                      <p className="text-gray-500">No recent submissions to display.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-        </AppLayout>
-    );
+
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upcoming Homework</CardTitle>
+                  <CardDescription>Assignments due soon</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {upcomingHomework && upcomingHomework.length > 0 ? (
+                    <div className="divide-y">
+                      {upcomingHomework.map((homework) => (
+                        <div key={homework.id} className="p-4">
+                          <div className="flex justify-between items-start mb-1">
+                            <Link 
+                              href={route('student.homework.show', [homework.course.id, homework.id])}
+                              className="text-base font-medium text-blue-600 hover:text-blue-800"
+                            >
+                              {homework.title}
+                            </Link>
+                            {homework.is_submitted ? (
+                              <Badge className="bg-green-100 text-green-800">Submitted</Badge>
+                            ) : (
+                              <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            <Link 
+                              href={route('student.courses.show', homework.course.id)}
+                              className="hover:text-blue-600"
+                            >
+                              {homework.course.title}
+                            </Link>
+                          </p>
+                          <div className="flex items-center text-xs text-gray-500">
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            <span>Due {formatDate(homework.due_date)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center">
+                      <p className="text-gray-500">No upcoming homework assignments.</p>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="bg-gray-50 px-4 py-3">
+                  <Link href={route('student.homework.index')} className="w-full">
+                    <Button variant="outline" className="w-full" size="sm">
+                      View All Homework
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Learning Streak</CardTitle>
+                  <CardDescription>Keep up the momentum!</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center my-2">
+                    <div className="text-center">
+                      <div className="flex justify-center mb-2">
+                        <div className="p-3 rounded-full bg-orange-100">
+                          <ClockIcon className="h-8 w-8 text-orange-500" />
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold">7 Days</p>
+                      <p className="text-sm text-gray-500">Current streak</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-1 mt-4">
+                    {Array.from({ length: 7 }).map((_, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`h-8 rounded-sm ${idx < 5 ? 'bg-green-500' : 'bg-gray-200'}`}
+                        title={`Day ${idx + 1}`}
+                      ></div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-center text-gray-500 mt-2">Last 7 days</p>
+                </CardContent>
+                <CardFooter className="bg-gray-50 px-4 py-3 text-center">
+                  <p className="text-sm text-gray-600">Study today to maintain your streak!</p>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
+  );
 } 

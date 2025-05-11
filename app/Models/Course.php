@@ -28,7 +28,6 @@ class Course extends Model
         'schedule',
         'teacher_id',
         'max_enrollment',
-        'status',
         'location',
         'image',
     ];
@@ -44,14 +43,6 @@ class Course extends Model
         'end_date' => 'date',
         'price' => 'decimal:2',
     ];
-
-    /**
-     * Course status constants
-     */
-    const STATUS_UPCOMING = 'upcoming';
-    const STATUS_ACTIVE = 'active';
-    const STATUS_COMPLETED = 'completed';
-    const STATUS_CANCELLED = 'cancelled';
 
     /**
      * Get the teacher associated with the course.
@@ -94,6 +85,16 @@ class Course extends Model
     }
 
     /**
+     * Get the students enrolled in this course.
+     */
+    public function students()
+    {
+        return $this->belongsToMany(User::class, 'enrollments')
+            ->withPivot('status')
+            ->wherePivot('status', 'approved');
+    }
+
+    /**
      * Check if course is full
      */
     public function isFull(): bool
@@ -119,15 +120,10 @@ class Course extends Model
 
     /**
      * Get students who are eligible for certificates
-     * (approved enrollments for completed courses)
+     * (approved enrollments)
      */
     public function getEligibleStudentsForCertificate()
     {
-        // Only completed courses can issue certificates
-        if ($this->status !== self::STATUS_COMPLETED) {
-            return collect();
-        }
-        
         $enrolledStudents = $this->enrollments()
             ->where('status', 'approved')
             ->with('user')

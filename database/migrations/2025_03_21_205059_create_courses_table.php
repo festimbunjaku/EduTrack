@@ -24,7 +24,6 @@ return new class extends Migration
             $table->json('schedule')->comment('JSON with days and times');
             $table->foreignId('teacher_id')->constrained('users')->onDelete('cascade');
             $table->integer('max_enrollment')->default(20);
-            $table->enum('status', ['upcoming', 'active', 'completed', 'cancelled'])->default('upcoming');
             $table->string('location');
             $table->string('image')->nullable();
             $table->timestamps();

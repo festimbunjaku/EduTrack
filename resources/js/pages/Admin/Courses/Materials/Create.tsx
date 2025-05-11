@@ -1,4 +1,5 @@
-import { Head, Link, useForm } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
+import { useForm as useReactHookForm } from "react-hook-form";
 import AppSidebarLayout from "@/layouts/app/app-sidebar-layout";
 import { PageProps, Course } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -18,44 +28,107 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { ChevronLeft, FileUp } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface CreateProps extends PageProps {
   course: Course;
   materialTypes: Record<string, string>;
 }
 
+// Create a schema for form validation
+const FormSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  type: z.string().min(1, "Material type is required"),
+  // These fields will be handled manually since they're conditionally required
+  link_url: z.string().optional(),
+  material_file: z.any().optional(),
+});
+
+type FormData = z.infer<typeof FormSchema>;
+
 export default function Create({ auth, course, materialTypes }: CreateProps) {
-  const { data, setData, post, processing, errors } = useForm({
-    title: "",
-    description: "",
-    type: "",
-    material_file: null as File | null,
-    link_url: "",
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const form = useReactHookForm<FormData>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      type: "",
+      link_url: "",
+    },
   });
-  
-  const [fileDetails, setFileDetails] = useState<{
-    name: string;
-    size: number;
-  } | null>(null);
+
+  const materialType = form.watch("type");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setData("material_file", file);
-      setFileDetails({
-        name: file.name,
-        size: file.size,
-      });
+      setSelectedFile(file);
+      form.setValue("material_file", file);
     }
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    post(route("admin.courses.materials.store", course.id), {
-      forceFormData: true,
-    });
+  const onSubmit = (data: FormData) => {
+    // Form validation for conditional fields
+    if (data.type === "link" && !data.link_url) {
+      form.setError("link_url", { 
+        type: "required", 
+        message: "URL is required for link type materials" 
+      });
+      return;
+    }
+
+    if (data.type !== "link" && !selectedFile) {
+      toast.error("Please upload a file for this material type");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    // Create FormData object for file upload
+    const formData = new FormData();
+    formData.append("title", data.title);
+    formData.append("type", data.type);
+    formData.append("description", data.description || "");
+    
+    if (data.type === "link") {
+      formData.append("link_url", data.link_url || "");
+    } else if (selectedFile) {
+      formData.append("material_file", selectedFile);
+    }
+
+    router.post(
+      route("admin.courses.materials.store", course.id),
+      formData,
+      {
+        onSuccess: () => {
+          toast.success("Material added successfully");
+          router.visit(route("admin.courses.materials.index", course.id));
+        },
+        onError: (errors) => {
+          console.error(errors);
+          setIsSubmitting(false);
+          
+          // Map backend errors to form errors
+          Object.keys(errors).forEach((key) => {
+            form.setError(key as any, {
+              type: "server",
+              message: errors[key],
+            });
+          });
+          
+          toast.error("Failed to add material");
+        },
+      }
+    );
   };
 
   return (
@@ -81,119 +154,168 @@ export default function Create({ auth, course, materialTypes }: CreateProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="title" className="text-sm font-medium">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="title"
-                    value={data.title}
-                    onChange={(e) => setData("title", e.target.value)}
-                    placeholder="e.g., Week 1 Lecture Notes"
-                    required
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., Week 1 Lecture Notes"
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  {errors.title && (
-                    <p className="text-sm text-red-500">{errors.title}</p>
-                  )}
+
+                  <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Material Type <span className="text-red-500">*</span></FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          disabled={isSubmitting}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select material type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(materialTypes).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="type" className="text-sm font-medium">
-                    Material Type <span className="text-red-500">*</span>
-                  </label>
-                  <Select
-                    value={data.type}
-                    onValueChange={(value) => setData("type", value)}
-                    required
-                  >
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="Select material type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(materialTypes).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.type && (
-                    <p className="text-sm text-red-500">{errors.type}</p>
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Provide a brief description of this material"
+                          className="min-h-[120px]"
+                          {...field}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="description" className="text-sm font-medium">
-                  Description
-                </label>
-                <Textarea
-                  id="description"
-                  value={data.description}
-                  onChange={(e) => setData("description", e.target.value)}
-                  placeholder="Provide a brief description of this material"
-                  rows={4}
                 />
-                {errors.description && (
-                  <p className="text-sm text-red-500">{errors.description}</p>
-                )}
-              </div>
 
-              {data.type !== "link" ? (
-                <div className="space-y-2">
-                  <label htmlFor="material_file" className="text-sm font-medium">
-                    Upload File <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      id="material_file"
-                      type="file"
-                      onChange={handleFileChange}
-                      className="max-w-md"
-                      required={data.type !== "link"}
-                    />
-                  </div>
-                  {fileDetails && (
-                    <p className="text-sm text-gray-500">
-                      Selected: {fileDetails.name} ({(fileDetails.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                  {errors.material_file && (
-                    <p className="text-sm text-red-500">{errors.material_file}</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label htmlFor="link_url" className="text-sm font-medium">
-                    URL <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="link_url"
-                    type="url"
-                    value={data.link_url}
-                    onChange={(e) => setData("link_url", e.target.value)}
-                    placeholder="https://example.com/resource"
-                    required={data.type === "link"}
+                {materialType === "link" ? (
+                  <FormField
+                    control={form.control}
+                    name="link_url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL <span className="text-red-500">*</span></FormLabel>
+                        <FormControl>
+                          <Input
+                            type="url"
+                            placeholder="https://example.com/resource"
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Enter the full URL for this resource
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  {errors.link_url && (
-                    <p className="text-sm text-red-500">{errors.link_url}</p>
-                  )}
-                </div>
-              )}
+                ) : (
+                  <FormItem>
+                    <FormLabel>Upload File {materialType && <span className="text-red-500">*</span>}</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center justify-center w-full">
+                        <label
+                          htmlFor="material_file"
+                          className={cn(
+                            "flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100",
+                            selectedFile ? "border-green-300" : "border-gray-300",
+                            !materialType && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <FileUp className={cn(
+                              "w-8 h-8 mb-2",
+                              selectedFile ? "text-green-500" : "text-gray-500"
+                            )} />
+                            {selectedFile ? (
+                              <div className="text-center">
+                                <p className="mb-2 text-sm text-green-700 font-semibold">
+                                  {selectedFile.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="mb-2 text-sm text-gray-500">
+                                  <span className="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Any file up to 10MB
+                                </p>
+                              </>
+                            )}
+                          </div>
+                          <input
+                            id="material_file"
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileChange}
+                            disabled={isSubmitting || !materialType || materialType === "link"}
+                          />
+                        </label>
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Upload the file for this material
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
 
-              <div className="flex justify-end gap-3">
-                <Link href={route("admin.courses.materials.index", course.id)}>
-                  <Button variant="outline" type="button">
-                    Cancel
+                <div className="flex justify-end gap-4 pt-4">
+                  <Link href={route("admin.courses.materials.index", course.id)}>
+                    <Button variant="outline" type="button" disabled={isSubmitting}>
+                      Cancel
+                    </Button>
+                  </Link>
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting || !form.formState.isValid}
+                  >
+                    {isSubmitting ? "Adding..." : "Add Material"}
                   </Button>
-                </Link>
-                <Button type="submit" disabled={processing}>
-                  {processing ? "Uploading..." : "Add Material"}
-                </Button>
-              </div>
-            </form>
+                </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

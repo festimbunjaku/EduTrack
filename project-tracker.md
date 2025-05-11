@@ -146,3 +146,9 @@
 - [x] Mobile responsiveness
 - [x] Accessibility compliance
 - [ ] Testing suite 
+
+todo 
+redesign the welcome page and the login register pages make the best ui possible
+make new dashboards functional with real data that we can get from the files in our projescts 
+make the admin sidebar links tell the right things
+make the tests coverage 100% without droping do react 18 or something else fix the tests until everything works 100%

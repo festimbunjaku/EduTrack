@@ -19,29 +19,29 @@ class RolesAndPermissionsSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create roles
-        $adminRole = Role::create(['name' => 'admin']);
-        $teacherRole = Role::create(['name' => 'teacher']);
-        $studentRole = Role::create(['name' => 'student']);
+        // Create roles if they don't exist
+        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $teacherRole = Role::firstOrCreate(['name' => 'teacher']);
+        $studentRole = Role::firstOrCreate(['name' => 'student']);
 
-        // Create permissions
+        // Create permissions if they don't exist
         // Admin permissions
-        $manageUsers = Permission::create(['name' => 'manage users']);
-        $manageRoles = Permission::create(['name' => 'manage roles']);
-        $managePermissions = Permission::create(['name' => 'manage permissions']);
-        $viewAllCourses = Permission::create(['name' => 'view all courses']);
+        $manageUsers = Permission::firstOrCreate(['name' => 'manage users']);
+        $manageRoles = Permission::firstOrCreate(['name' => 'manage roles']);
+        $managePermissions = Permission::firstOrCreate(['name' => 'manage permissions']);
+        $viewAllCourses = Permission::firstOrCreate(['name' => 'view all courses']);
         
         // Teacher permissions
-        $createCourse = Permission::create(['name' => 'create course']);
-        $editCourse = Permission::create(['name' => 'edit course']);
-        $deleteCourse = Permission::create(['name' => 'delete course']);
-        $viewEnrolledStudents = Permission::create(['name' => 'view enrolled students']);
-        $gradeStudents = Permission::create(['name' => 'grade students']);
+        $createCourse = Permission::firstOrCreate(['name' => 'create course']);
+        $editCourse = Permission::firstOrCreate(['name' => 'edit course']);
+        $deleteCourse = Permission::firstOrCreate(['name' => 'delete course']);
+        $viewEnrolledStudents = Permission::firstOrCreate(['name' => 'view enrolled students']);
+        $gradeStudents = Permission::firstOrCreate(['name' => 'grade students']);
         
         // Student permissions
-        $enrollCourse = Permission::create(['name' => 'enroll course']);
-        $viewEnrolledCourses = Permission::create(['name' => 'view enrolled courses']);
-        $submitAssignment = Permission::create(['name' => 'submit assignment']);
+        $enrollCourse = Permission::firstOrCreate(['name' => 'enroll course']);
+        $viewEnrolledCourses = Permission::firstOrCreate(['name' => 'view enrolled courses']);
+        $submitAssignment = Permission::firstOrCreate(['name' => 'submit assignment']);
         
         // Assign permissions to roles
         $adminRole->givePermissionTo([
@@ -59,11 +59,18 @@ class RolesAndPermissionsSeeder extends Seeder
             $enrollCourse, $viewEnrolledCourses, $submitAssignment
         ]);
 
+        // Check if we already have users
+        if (User::count() > 0) {
+            $this->command->info('Users already exist, skipping user creation.');
+            return;
+        }
+
         // Create admin user
         $admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@edutrack.com',
-            'password' => Hash::make('12345678')
+            'password' => Hash::make('12345678'),
+            'email_verified_at' => now(),
         ]);
         $admin->assignRole('admin');
 
@@ -72,7 +79,8 @@ class RolesAndPermissionsSeeder extends Seeder
             $teacher = User::create([
                 'name' => "Teacher $i",
                 'email' => "teacher$i@edutrack.com",
-                'password' => Hash::make('12345678')
+                'password' => Hash::make('12345678'),
+                'email_verified_at' => now(),
             ]);
             $teacher->assignRole('teacher');
         }
@@ -82,7 +90,8 @@ class RolesAndPermissionsSeeder extends Seeder
             $student = User::create([
                 'name' => "Student $i",
                 'email' => "student$i@edutrack.com",
-                'password' => Hash::make('12345678')
+                'password' => Hash::make('12345678'),
+                'email_verified_at' => now(),
             ]);
             $student->assignRole('student');
         }

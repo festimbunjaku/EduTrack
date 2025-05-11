@@ -1,4 +1,5 @@
-import { Head, Link, router, useForm } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
+import { useForm as useReactHookForm } from "react-hook-form";
 import AppSidebarLayout from "@/layouts/app/app-sidebar-layout";
 import { PageProps, Course, User } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -41,16 +42,23 @@ interface CreateProps extends PageProps {
   eligibleStudents: User[];
 }
 
+interface FormData {
+  user_id: string;
+  signature: File | null;
+}
+
 export default function Create({ auth, course, eligibleStudents }: CreateProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const form = useForm({
-    user_id: "",
-    signature: null as File | null,
+  const form = useReactHookForm<FormData>({
+    defaultValues: {
+      user_id: "",
+      signature: null,
+    }
   });
 
-  const onSubmit = (data: typeof form.data) => {
+  const onSubmit = (data: FormData) => {
     setIsSubmitting(true);
     
     // Format the data for submission
@@ -81,7 +89,7 @@ export default function Create({ auth, course, eligibleStudents }: CreateProps) 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
-      form.setData("signature", e.target.files[0]);
+      form.setValue("signature", e.target.files[0]);
     }
   };
 
@@ -243,7 +251,7 @@ export default function Create({ auth, course, eligibleStudents }: CreateProps) 
                   </Link>
                   <Button 
                     type="submit" 
-                    disabled={!isCourseCompleted || !hasEligibleStudents || isSubmitting || !form.data.user_id}
+                    disabled={!isCourseCompleted || !hasEligibleStudents || isSubmitting || !form.watch("user_id")}
                   >
                     {isSubmitting ? "Creating..." : "Create Certificate"}
                   </Button>

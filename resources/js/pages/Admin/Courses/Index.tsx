@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Trash, PencilLine, Eye, Plus, AlertTriangle } from "lucide-react";
+import { Trash, PencilLine, Eye, Plus, AlertTriangle, Book, FileText, Award } from "lucide-react";
 import Pagination from "@/components/Pagination";
 import {
   Dialog,
@@ -38,6 +38,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PageHeader } from "@/components/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CoursesData {
   data: Course[];
@@ -72,11 +74,6 @@ export default function Index({
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // Get the view parameter from the URL to handle special views
-  const { url } = usePage();
-  const urlParams = new URLSearchParams(url.split('?')[1] || '');
-  const viewMode = urlParams.get('view');
-  
   // Define getStatusBadgeColor function before it's used
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -93,84 +90,29 @@ export default function Index({
     }
   };
   
-  // Function to navigate to the specific view for a course
-  const navigateToCourseView = (courseId: number) => {
-    if (viewMode === 'materials') {
-      router.visit(route('admin.courses.materials.index', { course: courseId }));
-    } else if (viewMode === 'homework') {
-      router.visit(route('admin.courses.homework.index', { course: courseId }));
-    } else if (viewMode === 'certificates') {
-      router.visit(route('admin.courses.certificates.index', { course: courseId }));
-    }
+  const openDeleteDialog = (course: Course) => {
+    setCourseToDelete(course);
   };
-  
-  // If we have a specific view mode, show a different UI for course selection
-  if (viewMode && ['materials', 'homework', 'certificates'].includes(viewMode)) {
-    const viewTitles = {
-      'materials': 'Course Materials',
-      'homework': 'Course Homework',
-      'certificates': 'Course Certificates'
-    };
+
+  const closeDeleteDialog = () => {
+    setCourseToDelete(null);
+    setIsDeleting(false);
+  };
+
+  const handleDelete = () => {
+    if (!courseToDelete) return;
     
-    return (
-      <AppSidebarLayout user={auth.user}>
-        <Head title={viewTitles[viewMode as keyof typeof viewTitles]} />
-        
-        <div className="space-y-6 p-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">{viewTitles[viewMode as keyof typeof viewTitles]}</h1>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Select a Course</CardTitle>
-              <CardDescription>
-                Choose a course to manage its {viewMode}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {courses.data.length > 0 ? (
-                  courses.data.map((course) => (
-                    <div 
-                      key={course.id}
-                      className="flex justify-between items-center p-4 border rounded-md bg-gray-50 hover:bg-gray-100 transition cursor-pointer"
-                      onClick={() => navigateToCourseView(course.id)}
-                    >
-                      <div>
-                        <h3 className="font-medium">{course.title}</h3>
-                        <p className="text-sm text-gray-500">
-                          {course.teacher ? `Taught by ${course.teacher.name}` : 'No teacher assigned'}
-                        </p>
-                      </div>
-                      <Badge className={getStatusBadgeColor(course.status)}>
-                        {statuses[course.status]}
-                      </Badge>
-                      <Button size="sm" variant="ghost">
-                        <Eye className="w-4 h-4 mr-2" />
-                        Select
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-10">
-                    <p className="text-gray-500">No courses available</p>
-                    <Link href={route("admin.courses.create")}>
-                      <Button className="mt-4">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create a Course
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </AppSidebarLayout>
-    );
-  }
-  
+    setIsDeleting(true);
+    router.delete(route("admin.courses.destroy", courseToDelete.id), {
+      onSuccess: () => {
+        closeDeleteDialog();
+      },
+      onError: () => {
+        setIsDeleting(false);
+      },
+    });
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     router.get(
@@ -208,28 +150,125 @@ export default function Index({
     );
   };
 
-  const openDeleteDialog = (course: Course) => {
-    setCourseToDelete(course);
+  // Improved course action links for materials, homework, and certificates
+  const renderCourseActionLinks = (course: Course) => {
+    return (
+      <div className="flex items-center justify-end space-x-1">
+        <Link href={route("admin.courses.show", course.id)}>
+          <Button
+            size="icon"
+            variant="ghost"
+            title="View course details"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </Link>
+        <Link href={route("admin.courses.edit", course.id)}>
+          <Button
+            size="icon"
+            variant="ghost"
+            title="Edit course"
+          >
+            <PencilLine className="h-4 w-4" />
+          </Button>
+        </Link>
+        
+        {/* Dedicated buttons for materials, homework and certificates */}
+        <Link href={route("admin.courses.materials.index", course.id)}>
+          <Button
+            size="icon"
+            variant="ghost"
+            title="Course materials"
+          >
+            <Book className="h-4 w-4 text-blue-500" />
+          </Button>
+        </Link>
+        
+        <Link href={route("admin.courses.homework.index", course.id)}>
+          <Button
+            size="icon"
+            variant="ghost"
+            title="Course homework"
+          >
+            <FileText className="h-4 w-4 text-green-500" />
+          </Button>
+        </Link>
+        
+        <Link href={route("admin.courses.certificates.index", course.id)}>
+          <Button
+            size="icon"
+            variant="ghost"
+            title="Course certificates"
+          >
+            <Award className="h-4 w-4 text-amber-500" />
+          </Button>
+        </Link>
+        
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => openDeleteDialog(course)}
+          title="Delete course"
+        >
+          <Trash className="h-4 w-4 text-red-500" />
+        </Button>
+      </div>
+    );
   };
 
-  const closeDeleteDialog = () => {
-    setCourseToDelete(null);
-    setIsDeleting(false);
-  };
-
-  const handleDelete = () => {
-    if (!courseToDelete) return;
-    
-    setIsDeleting(true);
-    router.delete(route("admin.courses.destroy", courseToDelete.id), {
-      onSuccess: () => {
-        closeDeleteDialog();
-      },
-      onError: () => {
-        setIsDeleting(false);
-      },
-    });
-  };
+  // Improved CourseCard component for reuse
+  const CourseCard = ({ course }: { course: Course }) => (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <Badge className={getStatusBadgeColor(course.status)}>
+            {statuses?.[course.status] || course.status}
+          </Badge>
+        </div>
+        <CardTitle className="mt-2">{course.title}</CardTitle>
+        <p className="text-sm text-gray-500">
+          {course.teacher ? `Taught by ${course.teacher.name}` : 'No teacher assigned'}
+        </p>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+          <div>
+            <span className="text-gray-500">Start Date:</span>
+            <p>{format(new Date(course.start_date), "MMM d, yyyy")}</p>
+          </div>
+          <div>
+            <span className="text-gray-500">Enrollment:</span>
+            <p>{course.enrollments_count}/{course.max_enrollment}</p>
+          </div>
+        </div>
+      </CardContent>
+      <div className="flex justify-between items-center p-4 bg-muted/30 border-t">
+        <Link href={route("admin.courses.show", course.id)}>
+          <Button size="sm" variant="secondary">
+            <Eye className="w-4 h-4 mr-2" />
+            View Details
+          </Button>
+        </Link>
+        <div className="flex space-x-1">
+          <Link href={route("admin.courses.materials.index", course.id)}>
+            <Button size="icon" variant="ghost" title="Materials">
+              <Book className="h-4 w-4 text-blue-500" />
+            </Button>
+          </Link>
+          <Link href={route("admin.courses.homework.index", course.id)}>
+            <Button size="icon" variant="ghost" title="Homework">
+              <FileText className="h-4 w-4 text-green-500" />
+            </Button>
+          </Link>
+          <Link href={route("admin.courses.certificates.index", course.id)}>
+            <Button size="icon" variant="ghost" title="Certificates">
+              <Award className="h-4 w-4 text-amber-500" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <AppSidebarLayout user={auth.user}>
@@ -266,21 +305,24 @@ export default function Index({
       </Dialog>
 
       <div className="space-y-6 p-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Courses</h1>
-          <Link href={route("admin.courses.create")}>
-            <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              New Course
-            </Button>
-          </Link>
-        </div>
+        <PageHeader
+          title="Courses"
+          description="Manage all courses, enrollment status, and teacher assignments"
+          actions={
+            <Link href={route("admin.courses.create")}>
+              <Button className="flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                New Course
+              </Button>
+            </Link>
+          }
+        />
 
         <Card>
           <CardHeader>
             <CardTitle>Course Management</CardTitle>
             <CardDescription>
-              Manage all courses, enrollment status, and teacher assignments
+              View and manage all courses in the system
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -307,7 +349,7 @@ export default function Index({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Statuses</SelectItem>
-                    {Object.entries(statuses).map(([value, label]) => (
+                    {statuses && Object.entries(statuses).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
                         {label}
                       </SelectItem>
@@ -334,103 +376,101 @@ export default function Index({
               </div>
             </div>
 
-            <div className="rounded-md border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("title")}
-                    >
-                      Title
-                      {filters.sort_field === "title" && (
-                        <span className="ml-1">
-                          {filters.sort_direction === "asc" ? "▲" : "▼"}
-                        </span>
-                      )}
-                    </TableHead>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("start_date")}
-                    >
-                      Start Date
-                      {filters.sort_field === "start_date" && (
-                        <span className="ml-1">
-                          {filters.sort_direction === "asc" ? "▲" : "▼"}
-                        </span>
-                      )}
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Enrollment</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {courses.data.length > 0 ? (
-                    courses.data.map((course) => (
-                      <TableRow key={course.id}>
-                        <TableCell className="font-medium">
-                          {course.title}
-                        </TableCell>
-                        <TableCell>{course.teacher?.name}</TableCell>
-                        <TableCell>
-                          {format(new Date(course.start_date), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={getStatusBadgeColor(course.status)}
-                            variant="outline"
-                          >
-                            {statuses[course.status]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {course.enrollments_count}/{course.max_enrollment}
-                        </TableCell>
-                        <TableCell className="text-right space-x-1">
-                          <Link href={route("admin.courses.show", course.id)}>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="View course"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Link href={route("admin.courses.edit", course.id)}>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              title="Edit course"
-                            >
-                              <PencilLine className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => openDeleteDialog(course)}
-                            title="Delete course"
-                          >
-                            <Trash className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </TableCell>
+            <Tabs defaultValue="table" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="table">Table View</TabsTrigger>
+                <TabsTrigger value="grid">Grid View</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="table">
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead
+                          className="cursor-pointer"
+                          onClick={() => handleSort("title")}
+                        >
+                          Title
+                          {filters.sort_field === "title" && (
+                            <span className="ml-1">
+                              {filters.sort_direction === "asc" ? "▲" : "▼"}
+                            </span>
+                          )}
+                        </TableHead>
+                        <TableHead>Teacher</TableHead>
+                        <TableHead
+                          className="cursor-pointer"
+                          onClick={() => handleSort("start_date")}
+                        >
+                          Start Date
+                          {filters.sort_field === "start_date" && (
+                            <span className="ml-1">
+                              {filters.sort_direction === "asc" ? "▲" : "▼"}
+                            </span>
+                          )}
+                        </TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Enrollment</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={6}
-                        className="text-center py-8 text-gray-500"
-                      >
-                        No courses found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {courses.data.length > 0 ? (
+                        courses.data.map((course) => (
+                          <TableRow key={course.id}>
+                            <TableCell className="font-medium">
+                              {course.title}
+                            </TableCell>
+                            <TableCell>{course.teacher?.name}</TableCell>
+                            <TableCell>
+                              {format(new Date(course.start_date), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={getStatusBadgeColor(course.status)}
+                                variant="outline"
+                              >
+                                {statuses?.[course.status] || course.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {course.enrollments_count}/{course.max_enrollment}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {renderCourseActionLinks(course)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            No courses found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="grid">
+                {courses.data.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.data.map((course) => (
+                      <CourseCard key={course.id} course={course} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-md">
+                    No courses found
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
 
             <div className="mt-4">
               <Pagination links={courses.links} />

@@ -63,6 +63,13 @@ export interface Course {
     created_at: string;
     updated_at: string;
     enrollments_count?: number;
+    student_count?: number;
+    completion_rate?: number;
+    progress?: number;
+    instructor?: {
+        name: string;
+        id?: number;
+    };
     [key: string]: unknown;
 }
 
@@ -87,11 +94,17 @@ export interface Homework {
     title: string;
     description: string;
     deadline: string;
+    due_date?: string;
     attachment_path: string | null;
     created_at: string;
     updated_at: string;
     course?: Course;
     submissions?: HomeworkSubmission[];
+    status?: 'pending' | 'completed' | 'overdue';
+    student?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface HomeworkSubmission {
@@ -106,6 +119,7 @@ export interface HomeworkSubmission {
     updated_at: string;
     user?: User;
     homework?: Homework;
+    submitted_at?: string;
 }
 
 export interface Certificate {
@@ -133,6 +147,65 @@ export interface Enrollment {
     updated_at: string;
     user?: User;
     course?: Course;
+}
+
+export interface RecentActivity {
+    id: string | number;
+    type: 'enrollment' | 'grade' | 'submission' | 'certificate' | 'course' | 'student' | 'user' | string;
+    description: string;
+    created_at: string;
+    course_id?: number;
+    user_id?: number;
+    homework_id?: number;
+}
+
+export interface DashboardStats {
+    totalUsers?: number;
+    totalCourses?: number;
+    totalEnrollments?: number;
+    completionRate?: number;
+    totalStudents?: number;
+    pendingReviews?: number;
+    enrolledCourses?: number;
+    completedCourses?: number;
+    averageGrade?: number;
+    pendingAssignments?: number;
+}
+
+export interface StudentDashboardProps {
+    enrolledCourses: Course[];
+    pendingHomework: Homework[];
+    recentActivity: RecentActivity[];
+    stats: DashboardStats;
+}
+
+export interface TeacherDashboardProps {
+    teacherCourses: Course[];
+    pendingReviews: HomeworkSubmission[];
+    recentActivity: RecentActivity[];
+    stats: DashboardStats;
+}
+
+export interface AdminDashboardProps {
+    userStats: {
+        totalUsers: number;
+        newUsersToday: number;
+        activeUsers: number;
+        usersByRole: Record<string, number>;
+    };
+    courseStats: {
+        totalCourses: number;
+        activeCourses: number;
+        upcomingCourses: number;
+        completedCourses: number;
+    };
+    systemStats: {
+        totalEnrollments: number;
+        completionRate: number;
+        averageRating: number;
+        certificatesIssued: number;
+    };
+    recentActivity: RecentActivity[];
 }
 
 export type PageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {

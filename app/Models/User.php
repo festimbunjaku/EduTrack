@@ -69,8 +69,32 @@ class User extends Authenticatable
      */
     public function enrolledCourses()
     {
-        return $this->belongsToMany(Course::class, 'enrollments')
+        return $this->belongsToMany(Course::class, 'enrollments', 'user_id', 'course_id')
             ->withPivot('status')
             ->wherePivot('status', 'approved');
+    }
+    
+    /**
+     * Get the homework submissions of the user.
+     */
+    public function homeworkSubmissions(): HasMany
+    {
+        return $this->hasMany(HomeworkSubmission::class);
+    }
+    
+    /**
+     * Get the todos of the user.
+     */
+    public function todos(): HasMany
+    {
+        return $this->hasMany(Todo::class);
+    }
+
+    /**
+     * Get the certificates earned by the user.
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
     }
 }

@@ -28,6 +28,7 @@ class Homework extends Model
         'title',
         'description',
         'deadline',
+        'due_date',
         'attachment_path',
     ];
 
@@ -38,6 +39,7 @@ class Homework extends Model
      */
     protected $casts = [
         'deadline' => 'datetime',
+        'due_date' => 'datetime',
     ];
 
     /**

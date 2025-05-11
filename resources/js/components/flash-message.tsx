@@ -1,8 +1,8 @@
-import { usePage } from '@inertiajs/react';
 import { CheckCircle, AlertCircle, XCircle, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { usePage } from '@inertiajs/react';
 
 interface FlashMessages {
   success?: string;
@@ -10,11 +10,10 @@ interface FlashMessages {
   warning?: string;
 }
 
-export function FlashMessage() {
+export default function FlashMessage() {
   const props = usePage().props;
   const { flash = {} } = props as { flash?: FlashMessages };
   const [visible, setVisible] = useState(false);
-
 
   useEffect(() => {
     if (flash?.success || flash?.error || flash?.warning) {
@@ -28,9 +27,9 @@ export function FlashMessage() {
   }, [flash]);
 
   const getIcon = () => {
-    if (flash?.success) return <CheckCircle className="h-5 w-5 text-white" />;
-    if (flash?.error) return <XCircle className="h-5 w-5 text-white" />;
-    if (flash?.warning) return <AlertCircle className="h-5 w-5 text-white" />;
+    if (flash?.success) return <CheckCircle className="h-4 w-4 text-white" />;
+    if (flash?.error) return <XCircle className="h-4 w-4 text-white" />;
+    if (flash?.warning) return <AlertCircle className="h-4 w-4 text-white" />;
     return null;
   };
 
@@ -48,14 +47,14 @@ export function FlashMessage() {
   return (
     <AnimatePresence>
       {visible && (
-        <div className="fixed right-4 top-4 z-50 max-w-md">
+        <div className="fixed right-4 top-4 z-50 max-w-sm">
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'flex items-center space-x-3 rounded-lg p-4 shadow-lg',
+              'flex items-center space-x-2 rounded-lg px-3 py-2 text-sm shadow-lg',
               getBackgroundColor(),
             )}
           >
@@ -71,7 +70,7 @@ export function FlashMessage() {
               onClick={() => setVisible(false)}
             >
               <span className="sr-only">Close</span>
-              <X className="h-4 w-4 text-white" />
+              <X className="h-3 w-3 text-white" />
             </button>
           </motion.div>
         </div>

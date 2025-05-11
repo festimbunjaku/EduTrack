@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Users, User, GraduationCap, ClipboardList, FileText, Award, Book, Database } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Users, User, GraduationCap, ClipboardList, FileText, Award, Book, Database, Settings, ChevronRight, PieChart, UserPlus, Layers, Calendar, Search } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -18,75 +18,234 @@ const mainNavItems: NavItem[] = [
 // Admin-specific navigation items
 const adminNavItems: NavItem[] = [
     {
-        title: 'Admin Dashboard',
-        href: '/admin/dashboard',
-        icon: Database,
+        title: 'Dashboard',
+        href: route('admin.dashboard'),
+        icon: PieChart,
     },
     {
         title: 'Users',
-        href: '/admin/users',
+        href: route('admin.users.index'),
         icon: Users,
+        children: [
+            {
+                title: 'All Users',
+                href: route('admin.users.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Add User',
+                href: route('admin.users.create'),
+                icon: UserPlus,
+            },
+            {
+                title: 'Roles & Permissions',
+                href: route('admin.users.index') + '?tab=roles',
+                icon: ChevronRight,
+            }
+        ]
     },
     {
         title: 'Courses',
-        href: '/admin/courses',
+        href: route('admin.courses.index'),
         icon: GraduationCap,
+        children: [
+            {
+                title: 'All Courses',
+                href: route('admin.courses.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Create Course',
+                href: route('admin.courses.create'),
+                icon: ChevronRight,
+            },
+        ]
     },
     {
         title: 'Enrollments',
-        href: '/admin/enrollments',
+        href: route('admin.enrollments.index'),
         icon: ClipboardList,
+        children: [
+            {
+                title: 'Enrollment Requests',
+                href: route('admin.enrollment-requests.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Request History',
+                href: route('admin.enrollment-requests.history'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Active Enrollments',
+                href: route('admin.enrollments.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Enrollment History',
+                href: route('admin.enrollments.history'),
+                icon: ChevronRight,
+            },
+        ]
     },
     {
-        title: 'Materials',
-        href: '/admin/courses?view=materials',
+        title: 'Course Materials',
+        href: route('admin.courses.index') + '?view=materials',
         icon: Book,
     },
     {
         title: 'Homework',
-        href: '/admin/courses?view=homework',
+        href: route('admin.courses.index') + '?view=homework',
         icon: FileText,
     },
     {
         title: 'Certificates',
-        href: '/admin/courses?view=certificates',
+        href: route('admin.courses.index') + '?view=certificates',
         icon: Award,
+    },
+    {
+        title: 'Calendar',
+        href: route('admin.dashboard') + '?view=calendar',
+        icon: Calendar,
+    },
+    {
+        title: 'System Settings',
+        href: route('admin.dashboard') + '?view=settings',
+        icon: Settings,
     },
 ];
 
 // Teacher-specific navigation items
 const teacherNavItems: NavItem[] = [
     {
-        title: 'My Students',
-        href: '/teacher/students',
-        icon: User,
+        title: 'My Dashboard',
+        href: route('teacher.dashboard'),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'My Courses',
+        href: route('teacher.courses.index'),
+        icon: GraduationCap,
+        children: [
+            {
+                title: 'Active Courses',
+                href: route('teacher.courses.index') + '?filter=active',
+                icon: ChevronRight,
+            },
+            {
+                title: 'Upcoming Courses',
+                href: route('teacher.courses.index') + '?filter=upcoming',
+                icon: ChevronRight,
+            },
+            {
+                title: 'Completed Courses',
+                href: route('teacher.courses.index') + '?filter=completed',
+                icon: ChevronRight,
+            }
+        ]
+    },
+    {
+        title: 'Homework',
+        href: route('teacher.courses.index') + '?view=homework',
+        icon: FileText,
+        children: [
+            {
+                title: 'Pending Review',
+                href: route('teacher.courses.index') + '?view=homework&filter=pending',
+                icon: ChevronRight,
+            },
+            {
+                title: 'Manage Assignments',
+                href: route('teacher.courses.index') + '?view=homework&filter=all',
+                icon: ChevronRight,
+            }
+        ]
+    },
+    {
+        title: 'Course Materials',
+        href: route('teacher.courses.index') + '?view=materials',
+        icon: Book,
+    },
+    {
+        title: 'Certificates',
+        href: route('teacher.courses.index') + '?view=certificates',
+        icon: Award,
+    },
+    {
+        title: 'Calendar',
+        href: route('teacher.dashboard') + '?view=calendar',
+        icon: Calendar,
     },
 ];
 
 // Student-specific navigation items
 const studentNavItems: NavItem[] = [
     {
+        title: 'My Dashboard',
+        href: route('student.dashboard'),
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Discover Courses',
+        href: route('student.courses.discover'),
+        icon: Search,
+    },
+    {
         title: 'My Courses',
-        href: '/student/courses',
+        href: route('student.courses.index'),
         icon: BookOpen,
+        children: [
+            {
+                title: 'My Enrolled Courses',
+                href: route('student.courses.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Discover Courses',
+                href: route('student.courses.discover'),
+                icon: ChevronRight,
+            }
+        ]
+    },
+    {
+        title: 'My Homework',
+        href: route('student.homework.index'),
+        icon: FileText,
+        children: [
+            {
+                title: 'Pending Assignments',
+                href: route('student.homework.index'),
+                icon: ChevronRight,
+            },
+            {
+                title: 'Completed Assignments',
+                href: route('student.homework.index', { filter: 'completed' }),
+                icon: ChevronRight,
+            }
+        ]
+    },
+    {
+        title: 'Course Materials',
+        href: route('student.materials.index'),
+        icon: Book,
     },
     {
         title: 'My Certificates',
-        href: '/student/certificates',
+        href: route('student.certificates.index'),
         icon: Award,
-    },
+    }
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
+        title: 'Documentation',
+        href: '/docs',
+        icon: BookOpen,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
+        title: 'Support',
+        href: '/support',
+        icon: Layers,
     },
 ];
 
@@ -101,9 +260,9 @@ export function AppSidebar() {
         // Admin gets admin-specific nav items instead of the general dashboard
         navItems = [...adminNavItems];
     } else if (userRoles.includes('teacher')) {
-        navItems = [...mainNavItems, ...teacherNavItems];
+        navItems = [...teacherNavItems];
     } else if (userRoles.includes('student')) {
-        navItems = [...mainNavItems, ...studentNavItems];
+        navItems = [...studentNavItems];
     } else {
         // Regular users just get the main nav items
         navItems = [...mainNavItems];
@@ -115,7 +274,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={userRoles.includes('admin') ? "/admin/dashboard" : "/dashboard"} prefetch>
+                            <Link href={userRoles.includes('admin') ? route('admin.dashboard') : route('dashboard')} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

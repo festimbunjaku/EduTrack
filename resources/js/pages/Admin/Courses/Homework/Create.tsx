@@ -1,4 +1,5 @@
-import { Head, Link, router, useForm } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
+import { useForm as useReactHookForm } from "react-hook-form";
 import AppSidebarLayout from "@/layouts/app/app-sidebar-layout";
 import { PageProps, Course } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -36,18 +37,27 @@ interface CreateProps extends PageProps {
   course: Course;
 }
 
+interface FormData {
+  title: string;
+  description: string;
+  deadline: Date;
+  attachment: File | null;
+}
+
 export default function Create({ auth, course }: CreateProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const form = useForm({
-    title: "",
-    description: "",
-    deadline: new Date(new Date().setDate(new Date().getDate() + 7)),
-    attachment: null as File | null,
+  const form = useReactHookForm<FormData>({
+    defaultValues: {
+      title: "",
+      description: "",
+      deadline: new Date(new Date().setDate(new Date().getDate() + 7)),
+      attachment: null,
+    }
   });
 
-  const onSubmit = (data: typeof form.data) => {
+  const onSubmit = (data: FormData) => {
     setIsSubmitting(true);
     
     // Format the data for submission
@@ -80,8 +90,8 @@ export default function Create({ auth, course }: CreateProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
-      // Update form.data for validation purposes
-      form.setData("attachment", e.target.files[0]);
+      // Update form data for validation purposes
+      form.setValue("attachment", e.target.files[0]);
     }
   };
 

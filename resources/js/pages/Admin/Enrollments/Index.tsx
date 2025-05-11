@@ -65,11 +65,17 @@ interface IndexProps extends PageProps {
 export default function Index({
   auth,
   enrollments,
-  filters,
-  statuses,
-  courses,
+  filters = {
+    search: '',
+    status: '',
+    course_id: '',
+    sort_field: 'created_at',
+    sort_direction: 'desc'
+  },
+  statuses = {},
+  courses = []
 }: IndexProps) {
-  const [search, setSearch] = useState(filters.search || "");
+  const [search, setSearch] = useState(filters?.search || "");
   const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "deny" | null>(null);

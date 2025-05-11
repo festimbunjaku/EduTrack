@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CertificateController extends Controller
 {
@@ -86,8 +87,10 @@ class CertificateController extends Controller
         
         $certificate->save();
         
-        // Generate PDF certificate (this will be implemented later)
-        // $this->generateCertificatePDF($certificate);
+        // Generate PDF certificate
+        $pdfPath = $this->generateCertificatePDF($certificate);
+        $certificate->pdf_path = $pdfPath;
+        $certificate->save();
         
         return redirect()->route('admin.courses.certificates.show', [
             'course' => $course->id,
@@ -115,7 +118,10 @@ class CertificateController extends Controller
     {
         // Check if the PDF already exists
         if ($certificate->pdf_path && Storage::disk('public')->exists($certificate->pdf_path)) {
-            return Storage::disk('public')->download($certificate->pdf_path, "certificate_{$certificate->certificate_number}.pdf");
+            return response()->download(
+                storage_path('app/public/' . $certificate->pdf_path),
+                "certificate_{$certificate->certificate_number}.pdf"
+            );
         }
         
         // Generate the PDF if it doesn't exist
@@ -125,23 +131,43 @@ class CertificateController extends Controller
         $certificate->pdf_path = $pdfPath;
         $certificate->save();
         
-        return Storage::disk('public')->download($pdfPath, "certificate_{$certificate->certificate_number}.pdf");
+        return response()->download(
+            storage_path('app/public/' . $pdfPath),
+            "certificate_{$certificate->certificate_number}.pdf"
+        );
     }
     
     /**
-     * Generate a PDF certificate (stub for future implementation).
+     * Generate a PDF certificate.
      */
-    private function generateCertificatePDF(Certificate $certificate)
+    public function generateCertificatePDF(Certificate $certificate)
     {
-        // Placeholder for PDF generation logic
-        // In the actual implementation, this would use a PDF library like DOMPDF
-        // And templates to generate a professional-looking certificate
+        // Load dependencies
+        $certificate->load(['user', 'course']);
         
-        // Just return a placeholder for now
+        // Create a directory for certificates if it doesn't exist
+        if (!Storage::disk('public')->exists('certificates')) {
+            Storage::disk('public')->makeDirectory('certificates');
+        }
+        
+        // Define the PDF path
         $pdfPath = "certificates/{$certificate->certificate_number}.pdf";
         
-        // This would be replaced with actual PDF generation code
-        // For now, just return the path that would be used
+        // Generate PDF using Laravel-DomPDF
+        $pdf = Pdf::loadView('pdfs.certificate', [
+            'certificate' => $certificate,
+            'course' => $certificate->course,
+            'user' => $certificate->user,
+            'issueDate' => $certificate->issued_at->format('F d, Y'),
+        ]);
+        
+        // Set PDF options
+        $pdf->setPaper('a4', 'landscape');
+        $pdf->setOption('isHtml5ParserEnabled', true);
+        $pdf->setOption('isRemoteEnabled', true);
+        
+        // Save the PDF file
+        Storage::disk('public')->put($pdfPath, $pdf->output());
         
         return $pdfPath;
     }

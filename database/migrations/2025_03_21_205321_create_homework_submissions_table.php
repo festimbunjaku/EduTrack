@@ -15,10 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('homework_id')->constrained('homework')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('submission_file');
-            $table->text('comments')->nullable();
-            $table->enum('status', ['pending', 'approved', 'denied'])->default('pending');
-            $table->text('teacher_comments')->nullable();
+            $table->text('content');
+            $table->string('attachment')->nullable();
+            $table->enum('status', ['draft', 'submitted', 'graded'])->default('draft');
+            $table->integer('grade')->nullable();
+            $table->text('feedback')->nullable();
+            $table->timestamp('submitted_at')->nullable();
+            $table->timestamp('graded_at')->nullable();
             $table->timestamps();
 
             // A user can only have one submission per homework

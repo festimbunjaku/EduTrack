@@ -1,0 +1,561 @@
+import React, { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { PageProps } from '@/types';
+import AppLayout from '@/layouts/AppLayout';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  ArrowLeftIcon,
+  BookIcon,
+  ClipboardListIcon,
+  EditIcon,
+  FileIcon,
+  FilePlusIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+  UserIcon,
+  UsersIcon,
+  VideoIcon,
+} from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface Material {
+  id: number;
+  title: string;
+  type: string;
+  file_path: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Homework {
+  id: number;
+  title: string;
+  due_date: string;
+  submissions_count: number;
+  created_at: string;
+}
+
+interface Certificate {
+  id: number;
+  title: string;
+  created_at: string;
+}
+
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  thumbnail_url: string | null;
+  created_at: string;
+  updated_at: string;
+  students_count: number;
+  enrolled_students: User[];
+  materials: Material[];
+  homework: Homework[];
+  certificates: Certificate[];
+}
+
+interface ShowProps extends PageProps {
+  course: Course;
+}
+
+export default function Show({ auth, course }: ShowProps) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'published':
+        return 'bg-green-100 text-green-800 hover:bg-green-100';
+      case 'draft':
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+      case 'archived':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
+    }
+  };
+
+  const getMaterialTypeIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'document':
+        return <FileIcon className="h-4 w-4 mr-1" />;
+      case 'video':
+        return <VideoIcon className="h-4 w-4 mr-1" />;
+      case 'presentation':
+        return <ClipboardListIcon className="h-4 w-4 mr-1" />;
+      default:
+        return <FileIcon className="h-4 w-4 mr-1" />;
+    }
+  };
+
+  return (
+    <AppLayout user={auth.user}>
+      <Head title={course.title} />
+
+      <div className="py-12">
+        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+          <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+              <div className="flex items-center mb-4 md:mb-0">
+                <Link href={route('teacher.courses.index')}>
+                  <Button variant="outline" size="sm" className="mr-4">
+                    <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                    Back to Courses
+                  </Button>
+                </Link>
+                <h1 className="text-2xl font-semibold text-gray-800 mr-3">{course.title}</h1>
+                <Badge className={getStatusBadgeColor(course.status)}>
+                  {course.status}
+                </Badge>
+              </div>
+              <div className="flex space-x-2">
+                <Link href={route('teacher.courses.edit', course.id)}>
+                  <Button variant="outline" size="sm">
+                    <PencilIcon className="h-4 w-4 mr-2" />
+                    Edit Course
+                  </Button>
+                </Link>
+                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      <TrashIcon className="h-4 w-4 mr-2" />
+                      Delete Course
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Are you sure you want to delete this course?</DialogTitle>
+                      <DialogDescription>
+                        This action cannot be undone. All course data, including materials, homework, 
+                        and certificates will be permanently deleted.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Link href={route('teacher.courses.destroy', course.id)} method="delete" as="button">
+                        <Button variant="destructive">Delete Course</Button>
+                      </Link>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              {course.thumbnail_url && (
+                <img 
+                  src={course.thumbnail_url} 
+                  alt={course.title}
+                  className="w-full h-48 md:h-64 object-cover rounded-lg mb-4"
+                />
+              )}
+
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                  <div className="text-sm text-gray-500">Created on</div>
+                  <div className="font-medium">{formatDate(course.created_at)}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                  <div className="text-sm text-gray-500">Last updated</div>
+                  <div className="font-medium">{formatDate(course.updated_at)}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                  <div className="text-sm text-gray-500">Students enrolled</div>
+                  <div className="font-medium">{course.students_count}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                  <div className="text-sm text-gray-500">Materials</div>
+                  <div className="font-medium">{course.materials.length}</div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4 flex-1">
+                  <div className="text-sm text-gray-500">Homework</div>
+                  <div className="font-medium">{course.homework.length}</div>
+                </div>
+              </div>
+            </div>
+
+            <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="mb-6">
+                <TabsTrigger value="overview">
+                  <BookIcon className="h-4 w-4 mr-2" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="materials">
+                  <FileIcon className="h-4 w-4 mr-2" />
+                  Materials
+                </TabsTrigger>
+                <TabsTrigger value="homework">
+                  <ClipboardListIcon className="h-4 w-4 mr-2" />
+                  Homework
+                </TabsTrigger>
+                <TabsTrigger value="students">
+                  <UsersIcon className="h-4 w-4 mr-2" />
+                  Students
+                </TabsTrigger>
+                <TabsTrigger value="certificates">
+                  <FileIcon className="h-4 w-4 mr-2" />
+                  Certificates
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Course Description</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="prose max-w-none">
+                      <p>{course.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="materials" className="space-y-4">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Course Materials</h2>
+                  <Link href={route('teacher.courses.materials.create', course.id)}>
+                    <Button size="sm">
+                      <FilePlusIcon className="h-4 w-4 mr-2" />
+                      Add Material
+                    </Button>
+                  </Link>
+                </div>
+
+                {course.materials.length > 0 ? (
+                  <Card>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Date Added</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {course.materials.map((material) => (
+                            <TableRow key={material.id}>
+                              <TableCell className="font-medium">
+                                <Link 
+                                  href={route('teacher.courses.materials.show', [course.id, material.id])}
+                                  className="text-blue-600 hover:text-blue-800 flex items-center"
+                                >
+                                  {getMaterialTypeIcon(material.type)}
+                                  {material.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell className="capitalize">{material.type}</TableCell>
+                              <TableCell>{formatDate(material.created_at)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Link href={route('teacher.courses.materials.edit', [course.id, material.id])}>
+                                    <Button variant="outline" size="sm">
+                                      <EditIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                  <Link 
+                                    href={route('teacher.courses.materials.destroy', [course.id, material.id])} 
+                                    method="delete"
+                                    as="button"
+                                  >
+                                    <Button variant="destructive" size="sm">
+                                      <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-8">
+                      <FileIcon className="h-12 w-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500 mb-4">No materials have been added to this course yet.</p>
+                      <Link href={route('teacher.courses.materials.create', course.id)}>
+                        <Button>
+                          <PlusIcon className="h-4 w-4 mr-2" />
+                          Add Your First Material
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="homework" className="space-y-4">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Homework Assignments</h2>
+                  <Link href={route('teacher.courses.homework.create', course.id)}>
+                    <Button size="sm">
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Assign Homework
+                    </Button>
+                  </Link>
+                </div>
+
+                {course.homework.length > 0 ? (
+                  <Card>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Due Date</TableHead>
+                            <TableHead>Submissions</TableHead>
+                            <TableHead>Date Created</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {course.homework.map((homework) => (
+                            <TableRow key={homework.id}>
+                              <TableCell className="font-medium">
+                                <Link 
+                                  href={route('teacher.courses.homework.show', [course.id, homework.id])}
+                                  className="text-blue-600 hover:text-blue-800"
+                                >
+                                  {homework.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>{formatDate(homework.due_date)}</TableCell>
+                              <TableCell>{homework.submissions_count}</TableCell>
+                              <TableCell>{formatDate(homework.created_at)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Link href={route('teacher.courses.homework.edit', [course.id, homework.id])}>
+                                    <Button variant="outline" size="sm">
+                                      <EditIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                  <Link 
+                                    href={route('teacher.courses.homework.destroy', [course.id, homework.id])} 
+                                    method="delete"
+                                    as="button"
+                                  >
+                                    <Button variant="destructive" size="sm">
+                                      <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-8">
+                      <ClipboardListIcon className="h-12 w-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500 mb-4">No homework assignments have been created for this course yet.</p>
+                      <Link href={route('teacher.courses.homework.create', course.id)}>
+                        <Button>
+                          <PlusIcon className="h-4 w-4 mr-2" />
+                          Create Your First Assignment
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="students" className="space-y-4">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Enrolled Students</h2>
+                  <Button size="sm" disabled={course.status !== 'published'}>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Enroll Student
+                  </Button>
+                </div>
+
+                {course.enrolled_students.length > 0 ? (
+                  <Card>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {course.enrolled_students.map((student) => (
+                            <TableRow key={student.id}>
+                              <TableCell className="font-medium">{student.name}</TableCell>
+                              <TableCell>{student.email}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Button variant="outline" size="sm">
+                                    <UserIcon className="h-4 w-4" />
+                                  </Button>
+                                  <Link 
+                                    href={route('teacher.courses.unenroll', [course.id, student.id])} 
+                                    method="delete"
+                                    as="button"
+                                  >
+                                    <Button variant="destructive" size="sm">
+                                      <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-8">
+                      <UsersIcon className="h-12 w-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500 mb-4">No students are enrolled in this course yet.</p>
+                      {course.status !== 'published' ? (
+                        <p className="text-yellow-600">
+                          Publish this course to allow student enrollment.
+                        </p>
+                      ) : (
+                        <Button>
+                          <PlusIcon className="h-4 w-4 mr-2" />
+                          Enroll Students
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="certificates" className="space-y-4">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Course Certificates</h2>
+                  <Link href={route('teacher.courses.certificates.create', course.id)}>
+                    <Button size="sm">
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Create Certificate
+                    </Button>
+                  </Link>
+                </div>
+
+                {course.certificates.length > 0 ? (
+                  <Card>
+                    <CardContent className="p-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Date Created</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {course.certificates.map((certificate) => (
+                            <TableRow key={certificate.id}>
+                              <TableCell className="font-medium">
+                                <Link 
+                                  href={route('teacher.courses.certificates.show', [course.id, certificate.id])}
+                                  className="text-blue-600 hover:text-blue-800"
+                                >
+                                  {certificate.title}
+                                </Link>
+                              </TableCell>
+                              <TableCell>{formatDate(certificate.created_at)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Link href={route('teacher.courses.certificates.edit', [course.id, certificate.id])}>
+                                    <Button variant="outline" size="sm">
+                                      <EditIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                  <Link 
+                                    href={route('teacher.courses.certificates.destroy', [course.id, certificate.id])} 
+                                    method="delete"
+                                    as="button"
+                                  >
+                                    <Button variant="destructive" size="sm">
+                                      <TrashIcon className="h-4 w-4" />
+                                    </Button>
+                                  </Link>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center py-8">
+                      <FileIcon className="h-12 w-12 text-gray-400 mb-4" />
+                      <p className="text-gray-500 mb-4">No certificates have been created for this course yet.</p>
+                      <Link href={route('teacher.courses.certificates.create', course.id)}>
+                        <Button>
+                          <PlusIcon className="h-4 w-4 mr-2" />
+                          Create Your First Certificate
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
+  );
+} 
