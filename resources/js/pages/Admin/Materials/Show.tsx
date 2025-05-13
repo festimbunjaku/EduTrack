@@ -139,24 +139,22 @@ export default function Show({ auth, material, course }: ShowProps) {
               </Button>
             </Link>
             {material.type !== "link" ? (
-              <Link
-                href={route("admin.all.materials.download", material.id)}
+              <a
+                href={`/admin/all/materials/${material.id}/download`}
+                className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-25 transition"
               >
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Download
-                </Button>
-              </Link>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </a>
             ) : (
               <a
                 href={material.file_path || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-25 transition"
               >
-                <Button variant="outline" className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Open Link
-                </Button>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Link
               </a>
             )}
             <Button
@@ -206,7 +204,7 @@ export default function Show({ auth, material, course }: ShowProps) {
                   {material.type === "image" && material.file_path && (
                     <div className="rounded-md overflow-hidden border max-w-2xl mx-auto">
                       <img 
-                        src={route("admin.all.materials.download", material.id)} 
+                        src={`/admin/all/materials/${material.id}/download`}
                         alt={material.title} 
                         className="w-full h-auto object-contain"
                       />
@@ -219,7 +217,7 @@ export default function Show({ auth, material, course }: ShowProps) {
                         className="w-full h-auto"
                       >
                         <source 
-                          src={route("admin.all.materials.download", material.id)} 
+                          src={`/admin/all/materials/${material.id}/download`}
                           type={`video/${material.file_extension}`} 
                         />
                         Your browser does not support the video tag.
@@ -233,7 +231,7 @@ export default function Show({ auth, material, course }: ShowProps) {
                         className="w-full"
                       >
                         <source 
-                          src={route("admin.all.materials.download", material.id)} 
+                          src={`/admin/all/materials/${material.id}/download`}
                           type={`audio/${material.file_extension}`} 
                         />
                         Your browser does not support the audio tag.

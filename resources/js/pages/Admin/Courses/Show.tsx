@@ -26,6 +26,7 @@ import {
   AlertTriangle,
   FileText,
   Award,
+  Home,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -39,15 +40,32 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 
+interface Room {
+  id: number;
+  name: string;
+  location: string;
+}
+
+interface Schedule {
+  id: number;
+  day_of_week: string;
+  start_time: string;
+  end_time: string;
+  course_id: number;
+  room_id: number;
+  room: Room;
+}
+
 interface ShowProps extends PageProps {
   course: Course & {
     approved_enrollments_count: number;
     pending_enrollments_count: number;
     waitlisted_enrollments_count: number;
   };
+  timetable: Schedule[];
 }
 
-export default function Show({ auth, course }: ShowProps) {
+export default function Show({ auth, course, timetable }: ShowProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -89,6 +107,35 @@ export default function Show({ auth, course }: ShowProps) {
       return `${day}: ${item.start_time} - ${item.end_time}`;
     }).join(', ');
   };
+
+  const formatTime = (time: string) => {
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatDay = (day: string) => {
+    return day.charAt(0).toUpperCase() + day.slice(1);
+  };
+
+  // Group schedules by day
+  const days = [
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
+
+  const scheduleByDay = days.map((day) => {
+    return {
+      day,
+      schedules: timetable?.filter((schedule) => schedule.day_of_week === day) || [],
+    };
+  });
 
   const handleDelete = () => {
     setIsDeleting(true);
@@ -196,6 +243,68 @@ export default function Show({ auth, course }: ShowProps) {
                 <div>
                   <h3 className="text-lg font-medium mb-2">Description</h3>
                   <p className="text-gray-700">{course.description}</p>
+                </div>
+
+                {/* Timetable Section */}
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Course Schedule</h3>
+                  
+                  {timetable && timetable.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {scheduleByDay.map(({ day, schedules }) => (
+                        <Card key={day} className={schedules.length === 0 ? "opacity-60" : ""}>
+                          <CardHeader className="py-3">
+                            <CardTitle className="text-md">{formatDay(day)}</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {schedules.length === 0 ? (
+                              <p className="text-muted-foreground text-sm">No classes scheduled</p>
+                            ) : (
+                              <div className="space-y-3">
+                                {schedules
+                                  .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                  .map((schedule) => (
+                                    <div
+                                      key={schedule.id}
+                                      className="border rounded-md p-3 bg-muted/30"
+                                    >
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <div className="flex items-center mb-2">
+                                            <Clock className="h-4 w-4 mr-2" />
+                                            <span className="font-medium">
+                                              {formatTime(schedule.start_time)} - {formatTime(schedule.end_time)}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center">
+                                            <Home className="h-4 w-4 mr-2" />
+                                            <span className="text-sm">
+                                              {schedule.room.name} ({schedule.room.location})
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center p-6 bg-muted/30 rounded-lg">
+                      <Clock className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                      <h4 className="text-lg font-medium">No Schedule</h4>
+                      <p className="text-muted-foreground">This course doesn't have a schedule set yet.</p>
+                      <Link href={route("admin.courses.timetable-options", course.id)}>
+                        <Button variant="outline" className="mt-4">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Set Schedule
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 {/* Course features */}

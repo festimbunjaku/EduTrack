@@ -88,12 +88,10 @@ export default function Show({ auth, course, material, related_materials }: Show
             <div className="flex flex-col items-center justify-center p-10 bg-gray-50 rounded-lg">
               <FileTextIcon className="h-16 w-16 text-blue-500 mb-4" />
               <h3 className="text-lg font-medium mb-4">Document File Available</h3>
-              <Link href={route('student.materials.download', material.id)}>
-                <Button className="flex items-center">
-                  <DownloadIcon className="h-4 w-4 mr-2" />
-                  Download Document
-                </Button>
-              </Link>
+              <a href={`/student/materials/${material.id}/download`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <DownloadIcon className="h-4 w-4 mr-2" />
+                Download Document
+              </a>
             </div>
           );
         }
@@ -187,12 +185,10 @@ export default function Show({ auth, course, material, related_materials }: Show
             </div>
             
             {material.file_path && (
-              <Link href={route('student.materials.download', material.id)}>
-                <Button variant="outline" size="sm">
-                  <DownloadIcon className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-              </Link>
+              <a href={`/student/materials/${material.id}/download`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                <DownloadIcon className="h-4 w-4 mr-2" />
+                Download
+              </a>
             )}
           </div>
           

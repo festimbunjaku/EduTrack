@@ -294,9 +294,9 @@ export default function Show({ auth, course, homework }: ShowProps) {
                                 <TableCell className="text-right">
                                   <Button
                                     size="sm"
-                                    onClick={() => openGradeDialog(submission)}
+                                    onClick={() => window.location.href = route('teacher.courses.homework.submissions.show', [course.id, homework.id, submission.id])}
                                   >
-                                    Grade Submission
+                                    View Submission
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -369,9 +369,9 @@ export default function Show({ auth, course, homework }: ShowProps) {
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => openGradeDialog(submission)}
+                                    onClick={() => window.location.href = route('teacher.courses.homework.submissions.show', [course.id, homework.id, submission.id])}
                                   >
-                                    Update Grade
+                                    View Details
                                   </Button>
                                 </TableCell>
                               </TableRow>

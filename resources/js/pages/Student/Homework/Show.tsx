@@ -65,18 +65,40 @@ export default function Show({ auth, course, homework, submission }: ShowProps) 
   
   // Check if due date has passed
   const isDueDatePassed = () => {
-    return new Date() > new Date(homework.due_date);
+    try {
+      const dueDate = new Date(homework.due_date);
+      // Check if the date is valid
+      if (isNaN(dueDate.getTime())) {
+        console.error("Invalid due date", homework.due_date);
+        return false;
+      }
+      return new Date() > dueDate;
+    } catch (error) {
+      console.error("Error parsing due date:", error);
+      return false;
+    }
   };
   
   // Format date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    try {
+      const date = new Date(dateString);
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date string:", dateString);
+        return "Invalid date";
+      }
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Date error";
+    }
   };
   
   // Handle file selection

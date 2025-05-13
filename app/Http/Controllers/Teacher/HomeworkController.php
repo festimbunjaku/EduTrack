@@ -315,4 +315,34 @@ class HomeworkController extends Controller
             'totalPending' => $pendingSubmissions->count(),
         ]);
     }
+
+    /**
+     * Show a specific student submission.
+     */
+    public function showSubmission(Course $course, Homework $homework, HomeworkSubmission $submission)
+    {
+        // Ensure the authenticated teacher is the owner of this course
+        if ($course->teacher_id !== Auth::id()) {
+            abort(403, 'You do not have permission to view submissions for this course.');
+        }
+
+        // Ensure the homework belongs to the specified course
+        if ($homework->course_id !== $course->id) {
+            abort(404, 'Homework not found in this course.');
+        }
+
+        // Ensure the submission belongs to the specified homework
+        if ($submission->homework_id !== $homework->id) {
+            abort(404, 'Submission not found for this homework.');
+        }
+        
+        // Load the user data with the submission
+        $submission->load('user');
+
+        return Inertia::render('Teacher/Homework/Submission', [
+            'course' => $course,
+            'homework' => $homework,
+            'submission' => $submission,
+        ]);
+    }
 }

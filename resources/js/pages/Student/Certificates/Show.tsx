@@ -42,12 +42,10 @@ export default function Show({ auth, certificate }: ShowProps) {
             <h1 className="text-3xl font-bold">Certificate</h1>
           </div>
           {certificate.pdf_path && (
-            <Link href={route("student.certificates.download", certificate.id)}>
-              <Button className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Download Certificate
-              </Button>
-            </Link>
+            <a href={`/student/certificates/${certificate.id}/download`} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <Download className="h-4 w-4 mr-2" />
+              Download Certificate
+            </a>
           )}
         </div>
 
@@ -146,12 +144,12 @@ export default function Show({ auth, certificate }: ShowProps) {
               
               {certificate.pdf_path && (
                 <CardFooter>
-                  <Link className="w-full" href={route("student.certificates.download", certificate.id)}>
+                  <a href={`/student/certificates/${certificate.id}/download`} className="block w-full">
                     <Button variant="outline" className="w-full">
                       <Download className="h-4 w-4 mr-2" />
                       Download Certificate
                     </Button>
-                  </Link>
+                  </a>
                 </CardFooter>
               )}
             </Card>

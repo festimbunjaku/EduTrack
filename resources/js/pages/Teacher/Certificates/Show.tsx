@@ -85,7 +85,7 @@ export default function ShowCertificate({ certificate, course }: PageProps<Props
                 <Button variant="outline">Back to All Certificates</Button>
               </Link>
               <div className="flex space-x-2">
-                <Button variant="outline">Download</Button>
+                <a href={`/teacher/certificates/${certificate.id}/download`} className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-25 transition ease-in-out duration-150">Download</a>
                 <Button 
                   variant="destructive"
                   onClick={() => handleRevoke(certificate.id)}

@@ -16,7 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, FileIcon, FolderIcon, LinkIcon, PlusIcon, SearchIcon, VideoIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { CourseMaterial, Course } from '@/types';
 import { BookOpenIcon, FileTextIcon } from 'lucide-react';
 
 interface Material {
@@ -32,6 +31,10 @@ interface Material {
   url: string | null;
   created_at: string;
   updated_at: string;
+  course?: {
+    id: number;
+    title: string;
+  };
 }
 
 interface Course {
@@ -39,35 +42,45 @@ interface Course {
   title: string;
   description: string;
   status: string;
-  materials: Material[];
 }
 
 interface AllMaterialsProps extends PageProps {
   courses: Course[];
-  materials: (CourseMaterial & {
-    course: Course;
-  })[];
+  materials: Material[];
+  materialTypes?: Record<string, number>;
 }
 
-export default function AllMaterials({ courses = [], materials = [] }: AllMaterialsProps) {
+export default function AllMaterials({ auth, courses = [], materials = [], materialTypes = {} }: AllMaterialsProps) {
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Filter materials based on search query
-  const filteredCourses = (courses || []).map(course => ({
-    ...course,
-    materials: course.materials.filter(material => 
-      material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      material.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(course => course.materials.length > 0);
+  // Group materials by course
+  const materialsByCourse = materials.reduce((acc, material) => {
+    if (!material.course_id) return acc;
+    
+    if (!acc[material.course_id]) {
+      acc[material.course_id] = {
+        id: material.course_id,
+        title: material.course?.title || `Course ${material.course_id}`,
+        materials: []
+      };
+    }
+    
+    if (material.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        material.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+      acc[material.course_id].materials.push(material);
+    }
+    
+    return acc;
+  }, {} as Record<number, { id: number; title: string; materials: Material[] }>);
+  
+  // Convert to array and filter out courses with no matching materials
+  const filteredCourses = Object.values(materialsByCourse).filter(course => course.materials.length > 0);
   
   // Count total materials
-  const totalMaterials = (courses || []).reduce((acc, course) => acc + course.materials.length, 0);
+  const totalMaterials = materials.length;
   
   // Get all material types
-  const materialTypes = [...new Set((courses || []).flatMap(course => 
-    course.materials.map(material => material.type)
-  ))];
+  const types = Object.keys(materialTypes);
   
   // Function to get icon based on material type
   const getTypeIcon = (type: string) => {
@@ -108,11 +121,7 @@ export default function AllMaterials({ courses = [], materials = [] }: AllMateri
   };
 
   return (
-    <AppLayout
-      breadcrumbs={[
-        { label: 'Materials', href: '#' }
-      ]}
-    >
+    <AppLayout user={auth.user}>
       <Head title="Course Materials" />
 
       <div className="py-12">
@@ -134,9 +143,9 @@ export default function AllMaterials({ courses = [], materials = [] }: AllMateri
           <Tabs defaultValue="all">
             <TabsList className="mb-6">
               <TabsTrigger value="all">All Materials ({totalMaterials})</TabsTrigger>
-              {materialTypes.map(type => (
+              {types.map(type => (
                 <TabsTrigger key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}s
+                  {type.charAt(0).toUpperCase() + type.slice(1)}s ({materialTypes[type]})
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -225,14 +234,27 @@ export default function AllMaterials({ courses = [], materials = [] }: AllMateri
               )}
             </TabsContent>
             
-            {materialTypes.map(type => (
+            {types.map(type => (
               <TabsContent key={type} value={type}>
                 <div className="space-y-8">
-                  {filteredCourses
-                    .map(course => ({
-                      ...course,
-                      materials: course.materials.filter(m => m.type === type)
-                    }))
+                  {Object.values(
+                    materials
+                      .filter(m => m.type === type && 
+                        (m.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         m.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                      )
+                      .reduce((acc, material) => {
+                        if (!acc[material.course_id]) {
+                          acc[material.course_id] = {
+                            id: material.course_id,
+                            title: material.course?.title || `Course ${material.course_id}`,
+                            materials: []
+                          };
+                        }
+                        acc[material.course_id].materials.push(material);
+                        return acc;
+                      }, {} as Record<number, { id: number; title: string; materials: Material[] }>)
+                  )
                     .filter(course => course.materials.length > 0)
                     .map(course => (
                       <Card key={course.id}>
@@ -249,7 +271,7 @@ export default function AllMaterials({ courses = [], materials = [] }: AllMateri
                             </Link>
                           </CardTitle>
                           <CardDescription>
-                            {course.materials.length} {type}{course.materials.length !== 1 && 's'}
+                            {course.materials.length} {type} material{course.materials.length !== 1 && 's'}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -281,7 +303,8 @@ export default function AllMaterials({ courses = [], materials = [] }: AllMateri
                           </div>
                         </CardContent>
                       </Card>
-                  ))}
+                    ))
+                  }
                 </div>
               </TabsContent>
             ))}

@@ -37,9 +37,10 @@ class FileController extends Controller
         $mimeTypes = new MimeTypes();
         $mimeType = $mimeTypes->guessMimeType($file) ?: 'application/octet-stream';
         
-        // Return the file with appropriate headers
-        return response()->file($file, [
+        // Return the file with appropriate headers - use download instead of file for forced download
+        return response()->download($file, basename($file), [
             'Content-Type' => $mimeType,
+            'Content-Disposition' => 'attachment; filename="' . basename($file) . '"',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -63,9 +64,10 @@ class FileController extends Controller
         $mimeTypes = new MimeTypes();
         $mimeType = $mimeTypes->guessMimeType($file) ?: 'application/octet-stream';
         
-        // Return the file with appropriate headers
-        return response()->file($file, [
+        // Return the file with appropriate headers - use download instead of file for forced download
+        return response()->download($file, $fileName, [
             'Content-Type' => $mimeType,
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
             'Cache-Control' => 'public, max-age=86400',
         ]);
     }
@@ -94,8 +96,8 @@ class FileController extends Controller
             $mimeType = $mimeTypes->guessMimeType($file) ?: 'application/octet-stream';
         }
         
-        // Return the file with appropriate headers
-        return response()->file($file, [
+        // Return the file with appropriate headers - use download instead of file
+        return response()->download($file, $fileName, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'attachment; filename="' . basename($file) . '"',
             'Cache-Control' => 'public, max-age=86400',

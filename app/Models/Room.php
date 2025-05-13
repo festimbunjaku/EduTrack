@@ -34,8 +34,16 @@ class Room extends Model
      */
     public function isAvailable(string $dayOfWeek, string $startTime, string $endTime): bool
     {
+        // Log inputs for debugging
+        \Illuminate\Support\Facades\Log::debug("Checking availability for room {$this->name}", [
+            'room_id' => $this->id,
+            'day' => $dayOfWeek,
+            'start_time' => $startTime,
+            'end_time' => $endTime
+        ]);
+        
         // Check if there are any overlapping schedules
-        return !$this->schedules()
+        $overlappingSchedules = $this->schedules()
             ->where('day_of_week', $dayOfWeek)
             ->where(function ($query) use ($startTime, $endTime) {
                 // Check if the new time overlaps with existing schedules
@@ -44,6 +52,13 @@ class Room extends Model
                       ->where('end_time', '>', $startTime);
                 });
             })
-            ->exists();
+            ->count();
+        
+        \Illuminate\Support\Facades\Log::debug("Room {$this->name} availability result", [
+            'overlapping_schedules' => $overlappingSchedules,
+            'is_available' => $overlappingSchedules === 0
+        ]);
+        
+        return $overlappingSchedules === 0;
     }
 } 

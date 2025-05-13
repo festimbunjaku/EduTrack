@@ -30,6 +30,7 @@ class Course extends Model
         'max_enrollment',
         'location',
         'image',
+        'status',
     ];
 
     /**
@@ -147,5 +148,13 @@ class Course extends Model
     public function roomSchedules(): HasMany
     {
         return $this->hasMany(RoomSchedule::class);
+    }
+
+    /**
+     * Get the timetable options for the course.
+     */
+    public function timetableOptions(): HasMany
+    {
+        return $this->hasMany(TimetableOption::class);
     }
 }

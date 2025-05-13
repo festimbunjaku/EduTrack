@@ -8,6 +8,7 @@ use App\Models\Homework;
 use App\Models\HomeworkSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class HomeworkController extends Controller
@@ -430,5 +431,99 @@ class HomeworkController extends Controller
         $submission->save();
         
         return redirect()->back()->with('success', 'Submission reviewed successfully.');
+    }
+    
+    /**
+     * Show a specific student submission.
+     * 
+     * This method is called from two routes:
+     * 1. /admin/all/homework/{homeworkId}/submissions/{submission}
+     * 2. /admin/courses/{course}/homework/{homeworkId}/submissions/{submission}
+     */
+    public function showSubmission()
+    {
+        // Debug logging to see what arguments are being received
+        $args = func_get_args();
+        Log::info('showSubmission called with args:', [
+            'args_count' => count($args),
+            'args_dump' => $args
+        ]);
+
+        // Try to identify each argument
+        foreach ($args as $index => $arg) {
+            Log::info("Arg $index:", [
+                'type' => gettype($arg),
+                'class' => is_object($arg) ? get_class($arg) : 'not an object',
+                'value' => is_scalar($arg) ? $arg : 'non-scalar',
+            ]);
+        }
+
+        $course = null;
+        $homeworkId = null;
+        $submission = null;
+        
+        // Determine argument types based on route pattern
+        foreach ($args as $arg) {
+            if ($arg instanceof Course) {
+                $course = $arg;
+            } elseif ($arg instanceof HomeworkSubmission) {
+                $submission = $arg;
+            } elseif (is_string($arg) || is_numeric($arg)) {
+                $homeworkId = $arg;
+            }
+        }
+        
+        // Log what we detected
+        Log::info('Detected parameters:', [
+            'course' => $course ? $course->id : null,
+            'homeworkId' => $homeworkId,
+            'submission' => $submission ? $submission->id : null,
+        ]);
+        
+        // Validate that we have the required parameters
+        if (!$homeworkId || !$submission) {
+            Log::error('Missing required parameters for showSubmission');
+            abort(404, 'Invalid parameters');
+        }
+        
+        try {
+            // Retrieve the homework model from the database using the ID
+            $homework = Homework::findOrFail($homeworkId);
+            
+            // Ensure the submission belongs to the specified homework
+            if ($submission->homework_id != $homework->id) {
+                Log::error('Submission does not belong to homework', [
+                    'submission_homework_id' => $submission->homework_id,
+                    'homework_id' => $homework->id
+                ]);
+                abort(404, 'Submission not found for this homework.');
+            }
+            
+            // Load related data
+            $submission->load('user');
+            $homework->load('course');
+            
+            // Determine which view to render based on whether course is provided
+            if ($course) {
+                Log::info('Rendering course-specific view');
+                return Inertia::render('Admin/Courses/Homework/Submission', [
+                    'course' => $course,
+                    'homework' => $homework,
+                    'submission' => $submission,
+                ]);
+            } else {
+                Log::info('Rendering general view');
+                return Inertia::render('Admin/Homework/Submission', [
+                    'homework' => $homework,
+                    'submission' => $submission,
+                    'course' => $homework->course,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Exception in showSubmission: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 } 

@@ -146,4 +146,33 @@ class RoomController extends Controller
             'has_available_rooms' => $availableRooms->isNotEmpty(),
         ]);
     }
+
+    /**
+     * Display the schedule of all rooms.
+     */
+    public function allSchedules()
+    {
+        $roomsWithSchedules = Room::where('is_active', true)
+            ->with(['schedules' => function($query) {
+                $query->with(['course:id,title', 'course.teacher:id,name']);
+            }])
+            ->get();
+            
+        // Get all time slots for the view
+        $timeSlots = app(TimetableService::class)->getAllTimeSlots();
+            
+        return Inertia::render('Admin/Rooms/AllSchedules', [
+            'rooms' => $roomsWithSchedules,
+            'timeSlots' => $timeSlots,
+            'days' => [
+                'monday' => 'Monday',
+                'tuesday' => 'Tuesday',
+                'wednesday' => 'Wednesday',
+                'thursday' => 'Thursday',
+                'friday' => 'Friday',
+                'saturday' => 'Saturday',
+                'sunday' => 'Sunday',
+            ]
+        ]);
+    }
 } 

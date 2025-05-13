@@ -21,8 +21,8 @@ class RoomSchedule extends Model
 
     protected $casts = [
         'is_recurring' => 'boolean',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
+        'start_time' => 'string',
+        'end_time' => 'string',
     ];
 
     /**

@@ -36,13 +36,20 @@ class HomeworkController extends Controller
                     ->where('user_id', $user->id)
                     ->first();
                 
-                // Use due_date if available, otherwise use deadline
-                $dueDate = $homework->due_date ?? $homework->deadline;
+                // Fix: Use due_date if available, otherwise use deadline, and ensure it's a valid date
+                $dueDate = null;
+                if ($homework->due_date) {
+                    $dueDate = $homework->due_date;
+                } else if ($homework->deadline) {
+                    $dueDate = $homework->deadline;
+                } else {
+                    $dueDate = now(); // Fallback in case both are null
+                }
                 
                 return [
                     'id' => $homework->id,
                     'title' => $homework->title,
-                    'due_date' => $dueDate->format('Y-m-d'),
+                    'due_date' => $dueDate->format('Y-m-d H:i:s'),
                     'is_submitted' => $submission ? true : false,
                     'is_graded' => $submission && $submission->status === 'graded',
                     'grade' => $submission && $submission->status === 'graded' ? $submission->grade : null,
@@ -98,8 +105,13 @@ class HomeworkController extends Controller
             ->where('user_id', Auth::id())
             ->first();
             
-        // Check if deadline has passed
-        $dueDate = $homework->due_date ?? $homework->deadline;
+        // Fix for due date handling - properly handle both cases
+        if ($homework->due_date) {
+            $dueDate = $homework->due_date;
+        } else {
+            $dueDate = $homework->deadline;
+        }
+        
         $isExpired = now()->gt($dueDate);
         
         // Check for approaching deadline
@@ -108,10 +120,14 @@ class HomeworkController extends Controller
             $warningTime = now()->addHours(24);
             $isDeadlineApproaching = $warningTime->gt($dueDate);
         }
+        
+        // Make a copy of the homework and set the due_date explicitly for the frontend
+        $homeworkData = $homework->toArray();
+        $homeworkData['due_date'] = $dueDate->format('Y-m-d H:i:s');
 
         return Inertia::render('Student/Homework/Show', [
             'course' => $course,
-            'homework' => $homework,
+            'homework' => $homeworkData,
             'submission' => $submission,
             'isExpired' => $isExpired,
             'isDeadlineApproaching' => $isDeadlineApproaching,
@@ -135,8 +151,12 @@ class HomeworkController extends Controller
             abort(403, 'You are not enrolled in this course.');
         }
 
-        // Check if due date has passed - use due_date if available, otherwise use deadline
-        $dueDate = $homework->due_date ?? $homework->deadline;
+        // Fix for due date handling - properly handle both cases
+        if ($homework->due_date) {
+            $dueDate = $homework->due_date;
+        } else {
+            $dueDate = $homework->deadline;
+        }
         
         // Strict deadline enforcement
         if (now()->gt($dueDate)) {
@@ -198,5 +218,42 @@ class HomeworkController extends Controller
             return redirect()->route('student.homework.show', $homework->id)
                 ->with('success', 'Homework submitted successfully.');
         }
+    }
+
+    /**
+     * Download homework attachment
+     */
+    public function downloadAttachment($homeworkId)
+    {
+        $homework = Homework::findOrFail($homeworkId);
+        
+        // Make sure user is authorized
+        $user = Auth::user();
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('course_id', $homework->course_id)
+            ->where('enrollments.status', 'approved')
+            ->first();
+            
+        if (!$enrollment) {
+            abort(403, 'You do not have access to this course');
+        }
+        
+        // Check if homework has attachment
+        if (!$homework->file_path) {
+            abort(404, 'No attachment found for this homework');
+        }
+        
+        $filePath = Storage::disk('public')->path($homework->file_path);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found');
+        }
+        
+        // Return file download
+        return response()->download(
+            $filePath,
+            $homework->title . '.' . pathinfo($filePath, PATHINFO_EXTENSION),
+            ['Content-Type' => mime_content_type($filePath)]
+        );
     }
 }

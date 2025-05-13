@@ -43,6 +43,8 @@ interface TimetableProps extends PageProps {
 }
 
 export default function Timetable({ auth, course, timetable }: TimetableProps) {
+  console.log('Timetable props:', { course, timetable });
+
   const days = [
     "monday",
     "tuesday",
@@ -97,7 +99,7 @@ export default function Timetable({ auth, course, timetable }: TimetableProps) {
           <CardHeader>
             <CardTitle>{course.title}</CardTitle>
             <CardDescription>
-              Teacher: {course.teacher.name}
+              Teacher: {course.teacher?.name || 'Not assigned'}
             </CardDescription>
           </CardHeader>
           <CardContent>

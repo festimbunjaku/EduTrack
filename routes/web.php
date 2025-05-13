@@ -56,6 +56,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('courses/{course}/timetable', [CourseController::class, 'viewTimetable'])->name('courses.timetable');
         Route::post('courses/{course}/generate-timetable', [CourseController::class, 'generateTimetable'])->name('courses.generate-timetable');
         
+        // Debug route to test timetable functionality
+        Route::get('courses/{course}/test-timetable', function(\App\Models\Course $course) {
+            // Create a test timetable entry
+            $roomSchedule = \App\Models\RoomSchedule::updateOrCreate(
+                [
+                    'course_id' => $course->id,
+                    'day_of_week' => 'monday',
+                    'start_time' => '09:00',
+                ],
+                [
+                    'room_id' => 1, // Using room ID 1
+                    'end_time' => '10:30',
+                    'is_recurring' => true,
+                ]
+            );
+            
+            return redirect()->route('admin.courses.timetable', $course->id)
+                ->with('success', 'Test timetable entry created: ' . $roomSchedule->id);
+        })->name('courses.test-timetable');
+        
+        // New timetable options routes
+        Route::get('courses/{course}/timetable-options', [CourseController::class, 'showTimetableOptions'])->name('courses.timetable-options');
+        Route::post('courses/{course}/apply-timetable-option', [CourseController::class, 'applyTimetableOption'])->name('courses.apply-timetable-option');
+        Route::post('courses/{course}/manual-schedule', [CourseController::class, 'manualSchedule'])->name('courses.manual-schedule');
+        Route::post('courses/{course}/regenerate-timetable-options', [CourseController::class, 'regenerateTimetableOptions'])->name('courses.regenerate-timetable-options');
+        
         // Global resource management (admin-only access to everything)
         Route::prefix('all')->name('all.')->group(function() {
             // Access to all materials across all courses
@@ -77,6 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/homework/{homework}', [HomeworkController::class, 'updateAny'])->name('homework.update');
             Route::delete('/homework/{homework}', [HomeworkController::class, 'destroyAny'])->name('homework.destroy');
             Route::get('/homework/{homework}/download', [HomeworkController::class, 'downloadAttachmentAny'])->name('homework.download');
+            Route::get('/homework/{homeworkId}/submissions/{submission}', [HomeworkController::class, 'showSubmission'])->name('homework.submissions.show');
             Route::post('/homework/{homework}/submissions/{submission}/review', [HomeworkController::class, 'reviewSubmissionAny'])->name('homework.submissions.review');
             
             // Access to all certificates across all courses
@@ -110,6 +137,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/homework/{homework}', [HomeworkController::class, 'update'])->name('homework.update');
             Route::delete('/homework/{homework}', [HomeworkController::class, 'destroy'])->name('homework.destroy');
             Route::get('/homework/{homework}/download', [HomeworkController::class, 'downloadAttachment'])->name('homework.download');
+            Route::get('/homework/{homeworkId}/submissions/{submission}', [HomeworkController::class, 'showSubmission'])->name('homework.submissions.show');
             Route::post('/homework/{homework}/submissions/{submission}/review', [HomeworkController::class, 'reviewSubmission'])->name('homework.submissions.review');
             
             // Certificates
@@ -136,9 +164,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('enrollment-requests/{request}/deny', [EnrollmentRequestController::class, 'deny'])->name('enrollment-requests.deny');
         
         // Room management routes
-        Route::resource('rooms', RoomController::class);
         Route::get('rooms/timetable', [RoomController::class, 'timetable'])->name('rooms.timetable');
+        Route::get('rooms/all-schedules', [RoomController::class, 'allSchedules'])->name('rooms.all-schedules');
         Route::post('rooms/check-availability', [RoomController::class, 'checkAvailability'])->name('rooms.check-availability');
+        Route::resource('rooms', RoomController::class);
         
         // Additional routes
         Route::get('/roles', function() { 
@@ -177,6 +206,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/homework/{homework}/edit', [TeacherHomeworkController::class, 'edit'])->name('homework.edit');
             Route::put('/homework/{homework}', [TeacherHomeworkController::class, 'update'])->name('homework.update');
             Route::delete('/homework/{homework}', [TeacherHomeworkController::class, 'destroy'])->name('homework.destroy');
+            Route::get('/homework/{homework}/submissions/{submission}', [TeacherHomeworkController::class, 'showSubmission'])->name('homework.submissions.show');
             Route::post('/homework/{homework}/submissions/{submission}/review', [TeacherHomeworkController::class, 'reviewSubmission'])->name('homework.submissions.review');
             
             // Teacher Course Materials - only for courses they teach

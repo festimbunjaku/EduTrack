@@ -21,10 +21,27 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, XCircle } from "lucide-react";
+import { PlusCircle, XCircle, RefreshCw, X, Clock, ArrowLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ScheduleItem {
   day: string;
+  start_time: string;
+  end_time: string;
+}
+
+interface Room {
+  id: number;
+  name: string;
+  location: string;
+  capacity: number;
+  is_active: boolean;
+}
+
+interface RoomScheduleItem {
+  id?: number;
+  day: string;
+  room_id: string;
   start_time: string;
   end_time: string;
 }
@@ -33,9 +50,11 @@ interface EditProps extends PageProps {
   teachers: User[];
   statuses: Record<string, string>;
   course: Course;
+  rooms: Room[];
+  roomSchedules: RoomScheduleItem[];
 }
 
-export default function Edit({ auth, teachers, statuses, course }: EditProps) {
+export default function Edit({ auth, teachers, statuses, course, rooms, roomSchedules }: EditProps) {
   // Use Inertia's useForm hook with pre-filled data
   const { data, setData, put, processing, errors } = useForm({
     title: course.title || "",
@@ -47,48 +66,128 @@ export default function Edit({ auth, teachers, statuses, course }: EditProps) {
     location: course.location || "",
     start_date: course.start_date ? new Date(course.start_date).toISOString().split('T')[0] : "",
     end_date: course.end_date ? new Date(course.end_date).toISOString().split('T')[0] : "",
-    schedule: Array.isArray(course.schedule) ? course.schedule : [],
+    schedule: course.schedule ? course.schedule : {
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
+      friday: false,
+      saturday: false,
+      sunday: false,
+    },
+    room_schedules: roomSchedules || [],
     teacher_id: course.teacher_id?.toString() || "",
     max_enrollment: course.max_enrollment?.toString() || "20",
     status: course.status || "upcoming",
+    scheduling_mode: "manual", // Default to manual for editing
   });
 
   // For adding schedule items
   const [newScheduleDay, setNewScheduleDay] = useState("");
   const [newScheduleStartTime, setNewScheduleStartTime] = useState("");
   const [newScheduleEndTime, setNewScheduleEndTime] = useState("");
+  const [newScheduleRoomId, setNewScheduleRoomId] = useState("");
+  const [isGeneratingTimetable, setIsGeneratingTimetable] = useState(false);
+  const [timetablePreview, setTimetablePreview] = useState<Array<{
+    day: string;
+    room_id: string;
+    room_name?: string;
+    start_time: string;
+    end_time: string;
+  }>>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setData(name as any, value);
   };
 
+  const handleScheduleDayChange = (day: string) => {
+    setData('schedule', {
+      ...data.schedule,
+      [day]: !data.schedule[day]
+    });
+  };
+
+  const handleSchedulingModeChange = (value: string) => {
+    setData('scheduling_mode', value);
+  };
+
   const handleAddScheduleItem = () => {
     if (newScheduleDay && newScheduleStartTime && newScheduleEndTime) {
-      const newItem = {
+      // Update schedule to include this day
+      setData('schedule', {
+        ...data.schedule,
+        [newScheduleDay]: true
+      });
+      
+      // Add to room_schedules if we're in manual mode
+      const newRoomSchedule = {
         day: newScheduleDay,
+        room_id: newScheduleRoomId && newScheduleRoomId !== 'none' ? newScheduleRoomId : '',
         start_time: newScheduleStartTime,
-        end_time: newScheduleEndTime
+        end_time: newScheduleEndTime,
       };
       
-      setData('schedule', [...data.schedule, newItem]);
+      setData('room_schedules', [...data.room_schedules, newRoomSchedule]);
       
       // Reset inputs
       setNewScheduleDay("");
       setNewScheduleStartTime("");
       setNewScheduleEndTime("");
+      setNewScheduleRoomId("");
     }
   };
 
   const handleRemoveScheduleItem = (index: number) => {
-    const updatedSchedule = [...data.schedule];
-    updatedSchedule.splice(index, 1);
-    setData('schedule', updatedSchedule);
+    const updatedRoomSchedules = [...data.room_schedules];
+    updatedRoomSchedules.splice(index, 1);
+    setData('room_schedules', updatedRoomSchedules);
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     put(route('admin.courses.update', course.id));
+  };
+  
+  const formatDay = (day: string) => {
+    return day.charAt(0).toUpperCase() + day.slice(1);
+  };
+  
+  const formatTime = (time: string) => {
+    try {
+      const [hours, minutes] = time.split(':');
+      const date = new Date();
+      date.setHours(parseInt(hours));
+      date.setMinutes(parseInt(minutes));
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return time; // Return original if format is unexpected
+    }
+  };
+
+  // Initialize days with existing room schedules
+  useEffect(() => {
+    // Create a copy of the schedule object
+    const updatedSchedule = { ...data.schedule };
+    
+    // Mark all days that have room schedules as selected
+    data.room_schedules.forEach(schedule => {
+      updatedSchedule[schedule.day] = true;
+    });
+    
+    // Update the schedule state
+    setData('schedule', updatedSchedule);
+  }, []);
+  
+  // Group room schedules by day for better display
+  const getSchedulesByDay = () => {
+    const schedulesByDay = days.map(day => ({
+      day: day.value,
+      label: day.label,
+      schedules: data.room_schedules.filter(schedule => schedule.day === day.value)
+    }));
+    
+    return schedulesByDay;
   };
 
   // Days of the week options
@@ -109,6 +208,13 @@ export default function Edit({ auth, teachers, statuses, course }: EditProps) {
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Edit Course</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <a href={route('admin.courses.timetable', { course: course.id })}>
+                <Clock className="mr-2 h-4 w-4" /> View Timetable
+              </a>
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -247,80 +353,164 @@ export default function Edit({ auth, teachers, statuses, course }: EditProps) {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <Label>Schedule</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="day">Day</Label>
-                      <Select 
-                        value={newScheduleDay} 
-                        onValueChange={setNewScheduleDay}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Day" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {days.map((day) => (
-                            <SelectItem key={day.value} value={day.value}>
-                              {day.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="space-y-4 border p-4 rounded-md bg-muted/30 mt-4">
+                  <div>
+                    <h3 className="text-lg font-medium mb-2">Class Days & Schedule</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Edit which days the course will have classes and the schedule for each day
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {days.map((day) => (
+                        <div key={day.value} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`day-${day.value}`}
+                            checked={data.schedule[day.value]}
+                            onCheckedChange={() => handleScheduleDayChange(day.value)}
+                          />
+                          <Label htmlFor={`day-${day.value}`} className="cursor-pointer">
+                            {day.label}
+                          </Label>
+                        </div>
+                      ))}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="start_time">Start Time</Label>
-                      <Input
-                        id="start_time"
-                        type="time"
-                        value={newScheduleStartTime}
-                        onChange={(e) => setNewScheduleStartTime(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="end_time">End Time</Label>
-                      <Input
-                        id="end_time"
-                        type="time"
-                        value={newScheduleEndTime}
-                        onChange={(e) => setNewScheduleEndTime(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button 
-                        type="button" 
-                        onClick={handleAddScheduleItem}
-                        variant="outline"
-                        className="w-full flex items-center"
-                      >
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add
-                      </Button>
-                    </div>
+                    {errors.schedule && <p className="text-sm text-red-500">{errors.schedule}</p>}
                   </div>
 
-                  {errors.schedule && <p className="text-sm text-red-500">{errors.schedule}</p>}
-
-                  {data.schedule.length > 0 && (
-                    <div className="mt-4">
-                      <h3 className="text-sm font-medium mb-2">Schedule Items:</h3>
+                  <div className="my-6 border-t pt-6">
+                    <h3 className="text-lg font-medium mb-4">Timetable Editor</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                       <div className="space-y-2">
-                        {data.schedule.map((item, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 bg-muted rounded-md">
-                            <span>
-                              {days.find(d => d.value === item.day)?.label}: {item.start_time} - {item.end_time}
-                            </span>
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleRemoveScheduleItem(index)}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
+                        <Label htmlFor="new-day">Day</Label>
+                        <Select 
+                          value={newScheduleDay} 
+                          onValueChange={setNewScheduleDay}
+                        >
+                          <SelectTrigger id="new-day">
+                            <SelectValue placeholder="Select Day" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {days.map((day) => (
+                              <SelectItem key={day.value} value={day.value}>
+                                {day.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-room">Room</Label>
+                        <Select 
+                          value={newScheduleRoomId} 
+                          onValueChange={setNewScheduleRoomId}
+                        >
+                          <SelectTrigger id="new-room">
+                            <SelectValue placeholder="Select Room" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">To be assigned</SelectItem>
+                            {rooms.map((room) => (
+                              <SelectItem key={room.id} value={room.id.toString()}>
+                                {room.name} ({room.capacity} seats)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-start-time">Start Time</Label>
+                        <Input
+                          id="new-start-time"
+                          type="time"
+                          value={newScheduleStartTime}
+                          onChange={(e) => setNewScheduleStartTime(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-end-time">End Time</Label>
+                        <Input
+                          id="new-end-time"
+                          type="time"
+                          value={newScheduleEndTime}
+                          onChange={(e) => setNewScheduleEndTime(e.target.value)}
+                        />
                       </div>
                     </div>
-                  )}
+                    
+                    <div className="flex justify-between items-center mb-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleAddScheduleItem}
+                        disabled={!newScheduleDay || !newScheduleStartTime || !newScheduleEndTime}
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />Add Schedule Item
+                      </Button>
+                    </div>
+
+                    <div>
+                      <h3 className="text-lg font-medium mb-4">Current Timetable</h3>
+                      {data.room_schedules.length === 0 ? (
+                        <div className="rounded-md p-4 border border-dashed text-center">
+                          <p className="text-muted-foreground">No schedule items added yet</p>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Add schedule items using the form above
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {getSchedulesByDay()
+                            .filter(dayGroup => dayGroup.schedules.length > 0)
+                            .map((dayGroup) => (
+                              <div key={dayGroup.day} className="space-y-3">
+                                <h4 className="font-medium">{dayGroup.label}</h4>
+                                
+                                <div className="space-y-2">
+                                  {dayGroup.schedules
+                                    .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                    .map((item, index) => {
+                                      const roomName = rooms.find(r => r.id.toString() === item.room_id)?.name;
+                                      
+                                      return (
+                                        <div key={index} className="flex items-center justify-between p-3 bg-background rounded border">
+                                          <div>
+                                            <span className="text-muted-foreground mr-2">
+                                              {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                                            </span>
+                                            
+                                            {item.room_id && roomName && (
+                                              <span>
+                                                | Room: {roomName}
+                                              </span>
+                                            )}
+                                            
+                                            {!item.room_id && (
+                                              <span className="text-muted-foreground">
+                                                | Room: To be assigned
+                                              </span>
+                                            )}
+                                          </div>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleRemoveScheduleItem(index)}
+                                          >
+                                            <X className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+                                      );
+                                    })}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -375,12 +565,12 @@ export default function Edit({ auth, teachers, statuses, course }: EditProps) {
                     {errors.status && <p className="text-sm text-red-500">{errors.status}</p>}
                   </div>
                 </div>
-              </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={processing}>
-                  {processing ? 'Saving...' : 'Save Changes'}
-                </Button>
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={processing}>
+                    {processing ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
               </div>
             </form>
           </CardContent>

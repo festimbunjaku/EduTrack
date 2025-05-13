@@ -39,18 +39,23 @@ class MaterialController extends Controller
     {
         $teacherId = Auth::id();
         
-        // Get courses taught by the teacher
-        $courses = Course::where('teacher_id', $teacherId)->get();
+        // Get courses taught by the teacher with eager loading of materials
+        $courses = Course::where('teacher_id', $teacherId)
+            ->with('materials')
+            ->get();
         
+        // Get all materials for the teacher's courses with course relationship
         $materials = CourseMaterial::whereHas('course', function ($query) use ($teacherId) {
             $query->where('teacher_id', $teacherId);
         })->with('course')->orderBy('created_at', 'desc')->get();
+        
+        // Group materials by type for stats
+        $materialTypes = $materials->groupBy('type')->map->count();
 
         return Inertia::render('Teacher/Materials/AllMaterials', [
             'courses' => $courses,
             'materials' => $materials,
-            'courseCount' => $courses->count(),
-            'materialTypes' => $materials->groupBy('type')->map->count(),
+            'materialTypes' => $materialTypes,
         ]);
     }
 

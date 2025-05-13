@@ -162,6 +162,22 @@ export default function Show({ auth, enrollment, statuses, waitlistCount }: Show
     .join('')
     .toUpperCase();
 
+  // Format schedule time object to string
+  const formatScheduleTime = (timeValue: any): string => {
+    if (!timeValue) return 'N/A';
+    
+    // If it's already a string, return it
+    if (typeof timeValue === 'string') return timeValue;
+    
+    // If it's an object with start_time and end_time
+    if (typeof timeValue === 'object' && timeValue.start_time && timeValue.end_time) {
+      return `${timeValue.start_time} - ${timeValue.end_time}`;
+    }
+    
+    // If it's some other object, stringify it safely
+    return JSON.stringify(timeValue);
+  };
+
   return (
     <AppSidebarLayout user={auth.user}>
       <Head title={`Enrollment: ${enrollment.user.name}`} />
@@ -349,7 +365,7 @@ export default function Show({ auth, enrollment, statuses, waitlistCount }: Show
                       {Object.entries(enrollment.course.schedule).map(([day, times]) => (
                         <div key={day} className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-gray-500" />
-                          <span className="capitalize">{day}: {times}</span>
+                          <span className="capitalize">{day}: {formatScheduleTime(times)}</span>
                         </div>
                       ))}
                     </div>

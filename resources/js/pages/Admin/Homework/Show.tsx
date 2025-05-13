@@ -117,14 +117,13 @@ export default function Show({ auth, homework, course, submissionStats }: ShowPr
               </Button>
             </Link>
             {homework.attachment_path && (
-              <Link
-                href={route("admin.all.homework.download", homework.id)}
+              <a
+                href={`/admin/all/homework/${homework.id}/download`}
+                className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-25 transition"
               >
-                <Button variant="outline" className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Download Attachment
-                </Button>
-              </Link>
+                <Download className="h-4 w-4 mr-2" />
+                Download Attachment
+              </a>
             )}
             <Button
               variant="destructive"
@@ -178,14 +177,13 @@ export default function Show({ auth, homework, course, submissionStats }: ShowPr
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">Attachment included</span>
                     </div>
-                    <Link
-                      href={route("admin.all.homework.download", homework.id)}
+                    <a
+                      href={`/admin/all/homework/${homework.id}/download`}
+                      className="inline-flex items-center justify-center px-3 py-1.5 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-25 transition"
                     >
-                      <Button variant="outline" size="sm" className="flex items-center gap-1">
-                        <Download className="h-4 w-4" />
-                        Download
-                      </Button>
-                    </Link>
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </a>
                   </div>
                 </CardFooter>
               )}
@@ -226,7 +224,11 @@ export default function Show({ auth, homework, course, submissionStats }: ShowPr
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => window.location.href = route("admin.courses.homework.submissions.show", [course.id, homework.id, submission.id])}
+                            >
                               View
                             </Button>
                           </TableCell>

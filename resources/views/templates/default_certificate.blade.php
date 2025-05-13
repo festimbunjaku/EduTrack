@@ -85,21 +85,21 @@
     <div class="certificate">
         <div class="title">Certificate of Completion</div>
         <div class="subtitle">This certifies that</div>
-        <div class="name">{{student_name}}</div>
+        <div class="name">@{{ student_name }}</div>
         <div class="subtitle">has successfully completed the course</div>
-        <div class="course">{{course_title}}</div>
-        <div class="achievement">{{achievement}}</div>
-        <div class="date">Completed on {{completion_date}}</div>
+        <div class="course">@{{ course_title }}</div>
+        <div class="achievement">@{{ achievement }}</div>
+        <div class="date">Completed on @{{ completion_date }}</div>
         
         <div class="signature-area">
             <div class="signature">
-                <img src="{{signature_image}}" height="50" />
-                <div>{{issuer_name}}</div>
+                <img src="@{{ signature_image }}" height="50" />
+                <div>@{{ issuer_name }}</div>
                 <div>Instructor</div>
             </div>
         </div>
         
-        <div class="certificate-number">Certificate #{{certificate_number}}</div>
+        <div class="certificate-number">Certificate #@{{ certificate_number }}</div>
     </div>
 </body>
 </html> 

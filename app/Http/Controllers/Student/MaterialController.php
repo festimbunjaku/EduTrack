@@ -141,4 +141,102 @@ class MaterialController extends Controller
         
         return Response::download($filePath, $material->title);
     }
+
+    /**
+     * Display the specified material for a specific course.
+     */
+    public function showMaterial(Course $course, CourseMaterial $material)
+    {
+        $user = Auth::user();
+        
+        // Ensure the material belongs to the specified course
+        if ($material->course_id !== $course->id) {
+            abort(404, 'Material not found in this course.');
+        }
+        
+        // Ensure the authenticated student is enrolled in this course
+        $enrollment = Enrollment::where('course_id', $course->id)
+            ->where('user_id', $user->id)
+            ->where('enrollments.status', 'approved')
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'You are not enrolled in this course.');
+        }
+        
+        // Get other materials from the same course
+        $relatedMaterials = CourseMaterial::where('course_id', $course->id)
+            ->where('id', '!=', $material->id)
+            ->take(3)
+            ->get();
+
+        return Inertia::render('Student/Materials/Show', [
+            'course' => $course,
+            'material' => $material,
+            'related_materials' => $relatedMaterials,
+        ]);
+    }
+    
+    /**
+     * Download material file for a specific course.
+     */
+    public function downloadMaterial(Course $course, CourseMaterial $material)
+    {
+        $user = Auth::user();
+        
+        // Ensure the material belongs to the specified course
+        if ($material->course_id !== $course->id) {
+            abort(404, 'Material not found in this course.');
+        }
+        
+        // Ensure the authenticated student is enrolled in this course
+        $enrollment = Enrollment::where('course_id', $course->id)
+            ->where('user_id', $user->id)
+            ->where('enrollments.status', 'approved')
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'You are not enrolled in this course.');
+        }
+        
+        // Ensure material has a file to download
+        if (!$material->file_path) {
+            abort(404, 'No file available for this material.');
+        }
+        
+        $filePath = Storage::disk('public')->path($material->file_path);
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File not found.');
+        }
+        
+        return Response::download($filePath, $material->file_name ?? $material->title);
+    }
+    
+    /**
+     * Display a listing of materials for a specific course.
+     */
+    public function courseMaterials(Course $course)
+    {
+        $user = Auth::user();
+        
+        // Ensure the authenticated student is enrolled in this course
+        $enrollment = Enrollment::where('course_id', $course->id)
+            ->where('user_id', $user->id)
+            ->where('enrollments.status', 'approved')
+            ->first();
+
+        if (!$enrollment) {
+            abort(403, 'You are not enrolled in this course.');
+        }
+        
+        $materials = CourseMaterial::where('course_id', $course->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+            
+        return Inertia::render('Student/Materials/CourseIndex', [
+            'course' => $course,
+            'materials' => $materials,
+        ]);
+    }
 }

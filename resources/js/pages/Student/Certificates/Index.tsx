@@ -64,12 +64,10 @@ export default function Index({ auth, certificates }: CertificateProps) {
                         </Button>
                       </Link>
                       {certificate.pdf_path && (
-                        <Link href={route("student.certificates.download", certificate.id)}>
-                          <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                            <Download className="h-4 w-4 mr-2" />
-                            Download
-                          </Button>
-                        </Link>
+                        <a href={`/student/certificates/${certificate.id}/download`} className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </a>
                       )}
                     </div>
                   </div>

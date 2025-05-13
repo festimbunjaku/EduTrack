@@ -7,6 +7,7 @@ use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Services\CertificateService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -14,6 +15,22 @@ use Inertia\Inertia;
 
 class CertificateController extends Controller
 {
+    /**
+     * The certificate service instance.
+     */
+    protected $certificateService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param CertificateService $certificateService
+     * @return void
+     */
+    public function __construct(CertificateService $certificateService)
+    {
+        $this->certificateService = $certificateService;
+    }
+
     /**
      * Display a listing of certificates for a course.
      */
@@ -153,6 +170,13 @@ class CertificateController extends Controller
         $certificate->issued_at = now();
         $certificate->completion_date = $request->completion_date;
         $certificate->issuer_id = Auth::id();
+        $certificate->save();
+        
+        // Generate the certificate PDF
+        $pdfPath = $this->certificateService->generatePDF($certificate);
+        
+        // Update the certificate with the PDF path
+        $certificate->pdf_path = $pdfPath;
         $certificate->save();
 
         return redirect()->route('teacher.courses.certificates.index', $course->id)

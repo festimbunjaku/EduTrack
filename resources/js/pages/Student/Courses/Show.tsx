@@ -145,6 +145,22 @@ export default function Show({ auth, course, homeworks, certificate }: ShowProps
   
   const scheduleData = getScheduleData();
 
+  // Format schedule time object to string
+  const formatScheduleTime = (timeValue: any): string => {
+    if (!timeValue) return 'N/A';
+    
+    // If it's already a string, return it
+    if (typeof timeValue === 'string') return timeValue;
+    
+    // If it's an object with start_time and end_time
+    if (typeof timeValue === 'object' && timeValue.start_time && timeValue.end_time) {
+      return `${timeValue.start_time} - ${timeValue.end_time}`;
+    }
+    
+    // If it's some other object, stringify it safely
+    return JSON.stringify(timeValue);
+  };
+
   // Function to get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -322,7 +338,7 @@ export default function Show({ auth, course, homeworks, certificate }: ShowProps
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{day}</p>
-                          <p className="text-sm text-muted-foreground">{time}</p>
+                          <p className="text-sm text-muted-foreground">{formatScheduleTime(time)}</p>
                         </div>
                       </div>
                     ))}
@@ -566,7 +582,7 @@ export default function Show({ auth, course, homeworks, certificate }: ShowProps
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-sm">{day}</p>
-                          <p className="text-xs text-muted-foreground">{time}</p>
+                          <p className="text-xs text-muted-foreground">{formatScheduleTime(time)}</p>
                         </div>
                       </div>
                     ))}
