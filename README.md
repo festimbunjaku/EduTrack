@@ -128,4 +128,4 @@ EduTrack/
 
 ## 🔄 Status
 
-Project is: _in active development_
+Project is: _in development_
