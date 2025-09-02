@@ -3,6 +3,10 @@
 
 EduTrack is a comprehensive educational management system built with TypeScript, PHP, and JavaScript, designed to facilitate seamless interaction between students, teachers, and administrators in an educational environment.
 
+## 🔄 Status
+
+Project is: _not finished_
+
 ## 🌟 Features
 
 ### For Students
@@ -125,7 +129,3 @@ EduTrack/
 - System-wide statistics
 - Activity tracking
 
-
-## 🔄 Status
-
-Project is: _in development_
